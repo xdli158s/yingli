@@ -598,13 +598,6 @@ document.getElementById('btn-new-period').addEventListener('click', () => {
   }
 
   // 生成新盘期号
-  // 在现有逻辑中，手动开新盘通常意味着开启下一期
-  // 如果是按天计算期数（如每天一期），则可能是明天的期号，或者只是简单的数字递增
-  // 这里根据用户需求 "2025263" 格式，假设手动开盘 意味着 "下一期"
-  // 但通常这种格式是绑定日期的。如果一天多期，后缀可能需要扩展。
-  // 鉴于用户只给出了 "2026035" 这种 年份+天数 的格式，我们假设每天一期。
-  // 如果需要当天开新盘，可能意味着进入"下一天"或者逻辑需要调整。
-  // 暂时实现为：当前期号 + 1
   const currentYear = parseInt(currentPeriod.substring(0, 4));
   const currentDay = parseInt(currentPeriod.substring(4));
 
@@ -619,7 +612,6 @@ document.getElementById('btn-new-period').addEventListener('click', () => {
 
   currentPeriod = `${nextYear}${String(nextDay).padStart(3, '0')}`;
 
-
   // 清空投注记录
   bettingRecords = [];
 
@@ -629,6 +621,9 @@ document.getElementById('btn-new-period').addEventListener('click', () => {
   updateRecordStats();
   updateMockDataWithBets();
   refreshAllAnalysis();
+  
+  // 更新期数选择器
+  updatePeriodSelector();
 
   showToast('新盘已开启', 'success');
 });
@@ -1706,31 +1701,294 @@ function fillDrawInputs(numbers) {
 }
 
 
-// 更新结算页面的投注信息概览
-function updateSettleInfo() {
-  const periodEl = document.getElementById('settle-period-display');
-  // 移除旧的 countEl 和 totalEl 逻辑，使用新的 summary 信息替换
-  const summaryContainer = document.getElementById('settle-summary-header');
+// 格式化期数显示（日期+期数）
+function formatPeriodDisplay(period) {
+  if (!period || period.length < 7) return period;
+  
+  const year = period.substring(0, 4);
+  const dayOfYear = parseInt(period.substring(4, 7));
+  
+  // 计算日期
+  const date = new Date(year, 0);
+  date.setDate(dayOfYear);
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day} 第${period}期`;
+}
 
-  if (periodEl) periodEl.textContent = currentPeriod;
+// 更新期数选择器
+function updatePeriodSelector() {
+  const selector = document.getElementById('period-selector');
+  if (!selector) return;
+  
+  // 收集所有期数（当前期 + 历史期）
+  const allPeriods = new Set();
+  allPeriods.add(currentPeriod);
+  
+  drawHistory.forEach(record => {
+    if (record.period) allPeriods.add(record.period);
+  });
+  
+  // 按期数降序排列
+  const sortedPeriods = Array.from(allPeriods).sort((a, b) => b.localeCompare(a));
+  
+  // 生成选项：首选项为"历史总记录"
+  let options = '<option value="__HISTORY_ALL__">📊 历史总记录</option>';
+  
+  options += sortedPeriods.map(period => {
+    const displayText = formatPeriodDisplay(period);
+    const isCurrentPeriod = period === currentPeriod;
+    return `<option value="${period}" ${isCurrentPeriod ? 'selected' : ''}>${displayText}${isCurrentPeriod ? ' (当前期)' : ''}</option>`;
+  }).join('');
+  
+  selector.innerHTML = options;
+  
+  // 绑定选择事件
+  selector.onchange = function() {
+    const selectedValue = this.value;
+    if (selectedValue === '__HISTORY_ALL__') {
+      showHistoryList();
+    } else {
+      loadPeriodData(selectedValue);
+    }
+  };
+}
+
+// 显示历史总记录列表
+function showHistoryList() {
+  // 隐藏结算结果和订单详情
+  document.getElementById('settlement-result').innerHTML = '';
+  document.getElementById('settle-orders-section').style.display = 'none';
+  
+  // 显示历史列表
+  const historySection = document.getElementById('settle-history-section');
+  historySection.style.display = 'block';
+  
+  // 渲染历史记录
+  renderDrawHistory();
+  
+  // 更新投注概要为空
+  const summaryContainer = document.getElementById('settle-summary-header');
+  if (summaryContainer) {
+    summaryContainer.innerHTML = '<span class="info-stat" style="color: #94a3b8;">查看历史总记录</span>';
+  }
+}
+
+// 加载指定期数的数据
+function loadPeriodData(period) {
+  // 隐藏历史列表
+  document.getElementById('settle-history-section').style.display = 'none';
+  
+  // 如果是当前期，显示当前投注数据
+  if (period === currentPeriod) {
+    updateSettleInfo();
+    // 清空开奖输入框
+    document.querySelectorAll('.settle-draw-input').forEach(input => input.value = '');
+    // 清空结算结果
+    document.getElementById('settlement-result').innerHTML = '';
+    // 隐藏订单详情
+    document.getElementById('settle-orders-section').style.display = 'none';
+    return;
+  }
+  
+  // 查找历史记录
+  const historyRecord = drawHistory.find(r => r.period === period);
+  if (historyRecord) {
+    // 显示历史期数的投注信息
+    const summaryContainer = document.getElementById('settle-summary-header');
+    if (summaryContainer) {
+      summaryContainer.innerHTML = `
+        <span class="info-stat">订单 <strong>${historyRecord.totalBets}</strong> 笔</span>
+        <span class="info-stat">总额 <strong class="amount">¥${historyRecord.totalBetAmount.toFixed(2)}</strong></span>
+      `;
+    }
+    
+    // 填充开奖号码
+    if (historyRecord.drawNumbers && historyRecord.drawNumbers.length === 7) {
+      fillDrawInputs(historyRecord.drawNumbers);
+    }
+    
+    // 显示结算结果
+    const results = {
+      totalBets: historyRecord.totalBets,
+      totalBetAmount: historyRecord.totalBetAmount,
+      winCount: historyRecord.winCount,
+      loseCount: historyRecord.totalBets - historyRecord.winCount,
+      totalPayout: historyRecord.totalPayout,
+      profit: historyRecord.profit,
+      bets: historyRecord.bets || []
+    };
+    
+    renderSettlementResult(historyRecord.drawNumbers, results);
+    
+    // 显示订单详情区
+    renderOrdersTabs(results.bets);
+  }
+}
+
+// 渲染订单详情标签页
+function renderOrdersTabs(bets) {
+  const ordersSection = document.getElementById('settle-orders-section');
+  if (!ordersSection) return;
+  
+  ordersSection.style.display = 'block';
+  
+  const winBets = bets.filter(b => b.hasWin);
+  const loseBets = bets.filter(b => !b.hasWin);
+  
+  // 更新标签计数
+  document.getElementById('tab-count-all').textContent = bets.length;
+  document.getElementById('tab-count-win').textContent = winBets.length;
+  document.getElementById('tab-count-lose').textContent = loseBets.length;
+  
+  // 渲染各个标签页内容
+  document.getElementById('settle-orders-all').innerHTML = renderOrdersTable(bets);
+  document.getElementById('settle-orders-win').innerHTML = renderOrdersTable(winBets);
+  document.getElementById('settle-orders-lose').innerHTML = renderOrdersTable(loseBets);
+  
+  // 绑定标签切换事件
+  document.querySelectorAll('.settle-tab-btn').forEach(btn => {
+    btn.onclick = function() {
+      const tab = this.dataset.tab;
+      
+      // 更新按钮状态
+      document.querySelectorAll('.settle-tab-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      // 更新内容显示
+      document.querySelectorAll('.settle-orders-pane').forEach(pane => pane.classList.remove('active'));
+      document.getElementById(`settle-orders-${tab}`).classList.add('active');
+    };
+  });
+}
+
+// 渲染订单表格
+function renderOrdersTable(bets) {
+  if (!bets || bets.length === 0) {
+    return '<div style="text-align:center; padding: 60px 20px; color: #64748b; font-size: 14px;">暂无订单记录</div>';
+  }
+
+  return `
+    <table class="settle-bets-table" style="width: 100%; text-align: left; border-collapse: separate; border-spacing: 0;">
+      <thead>
+        <tr style="background: #1e293b; color: #94a3b8; font-size: 13px;">
+          <th style="padding: 12px; border-bottom: 1px solid #334155;">订单号/时间</th>
+          <th style="padding: 12px; border-bottom: 1px solid #334155;">玩家</th>
+          <th style="padding: 12px; border-bottom: 1px solid #334155;">玩法/赔率</th>
+          <th style="padding: 12px; border-bottom: 1px solid #334155;">内容摘要</th>
+          <th style="padding: 12px; border-bottom: 1px solid #334155;">单价</th>
+          <th style="padding: 12px; border-bottom: 1px solid #334155;">总额</th>
+          <th style="padding: 12px; border-bottom: 1px solid #334155;">结果(回报)</th>
+          <th style="padding: 12px; border-bottom: 1px solid #334155;">庄家盈亏</th>
+          <th style="padding: 12px; border-bottom: 1px solid #334155;">操作</th>
+        </tr>
+      </thead>
+      <tbody style="font-size: 13px;">
+        ${bets.map((bet, index) => {
+          const houseProfit = bet.totalAmount - bet.payout;
+          const profitClass = houseProfit >= 0 ? 'text-green' : 'text-red';
+          const profitStr = houseProfit >= 0 ? `+¥${houseProfit.toFixed(2)}` : `-¥${Math.abs(houseProfit).toFixed(2)}`;
+          
+          const resultAmount = bet.hasWin ? `¥${bet.payout.toFixed(2)}` : `0`;
+          const resultClass = bet.hasWin ? 'text-red' : '';
+          
+          const numCount = bet.betNumbers.length;
+          const shortNums = bet.betNumbers.slice(0, 6).join(', ');
+          const summary = numCount > 6 ? `${shortNums}... (共${numCount}注)` : shortNums;
+          
+          const allNums = bet.betNumbers.map(n => {
+            const isWin = bet.winNumbers && bet.winNumbers.includes(n);
+            const wave = getNumberWaveColor(n);
+            const winStyle = isWin
+              ? 'border: 2px solid #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.6); transform: scale(1.1); z-index: 10;'
+              : 'border: 1px solid transparent; opacity: 0.8;';
+
+            return `<span style="display:inline-block; width:24px; height:24px; line-height:22px; text-align:center; border-radius:50%; background:#334155; margin:3px; color:#fff; position:relative; ${winStyle}" class="ball-${wave}">
+                      ${n}
+                      ${isWin ? '<span style="position:absolute; top:-8px; right:-8px; background:#ef4444; color:white; font-size:9px; padding:0 3px; border-radius:4px; line-height:1.2;">中</span>' : ''}
+                  </span>`;
+          }).join('');
+          
+          const oddsDisplay = bet.odds ? `@${bet.odds}` : '@47.0';
+
+          return `
+            <tr style="border-bottom: 1px solid #1e293b; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">
+              <td style="padding: 12px; color: #e2e8f0; font-family: monospace;">
+                  <div style="font-weight:bold; color: #f8fafc;">${bet.orderId}</div>
+                  <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${bet.timestamp || '-'}</div>
+              </td>
+              <td style="padding: 12px;">${bet.playerName}</td>
+              <td style="padding: 12px;">
+                  <span style="background:#334155; padding:2px 6px; border-radius:4px; font-size:11px; margin-right: 4px;">${bet.betType || '特码'}</span>
+                  <span style="color: #fbbf24; font-size: 11px; font-weight: bold;">${oddsDisplay}</span>
+              </td>
+              <td style="padding: 12px; color: #a5b4fc;">${summary}</td>
+              <td style="padding: 12px;">¥${bet.betAmountPerNumber.toFixed(0)}</td>
+              <td style="padding: 12px; font-weight:bold;">¥${bet.totalAmount.toFixed(0)}</td>
+              <td style="padding: 12px;">
+                  <span class="${resultClass}" style="font-weight:bold;">${resultAmount}</span>
+              </td>
+              <td style="padding: 12px;">
+                  <span class="${profitClass}" style="font-weight:bold;">${profitStr}</span>
+              </td>
+              <td style="padding: 12px;">
+                  <button onclick="toggleOrderDetail${index}(this)" style="background:transparent; border:1px solid #475569; color:#94a3b8; padding:4px 10px; border-radius:4px; cursor:pointer; font-size: 12px; transition: all 0.2s;">详情</button>
+              </td>
+            </tr>
+            <tr class="detail-row" id="detail-row-${index}" style="display:none; background: #0b1120;">
+              <td colspan="9" style="padding: 0; border-bottom: 1px solid #334155;">
+                  <div style="padding: 16px 20px; box-shadow: inset 0 0 15px rgba(0,0,0,0.4); display: flex; gap: 24px;">
+                     <div style="flex:1;">
+                        <div style="font-size:12px; color:#94a3b8; margin-bottom:8px; display:flex; justify-content:space-between;">
+                           <span>投注明细 (${numCount}注)</span>
+                           <span>${bet.winNumbers && bet.winNumbers.length > 0 ? `<span style="color:#ef4444;">命中 ${bet.winNumbers.length} 注</span>` : '未中奖'}</span>
+                        </div>
+                        <div style="line-height:2; display: flex; flex-wrap: wrap; align-items: center;">${allNums}</div>
+                     </div>
+                     
+                     ${bet.hasWin ? `
+                     <div style="min-width: 120px; text-align: right; display: flex; flex-direction: column; justify-content: center; border-left: 1px dashed #334155; padding-left: 20px;">
+                        <div style="font-size:12px; color:#64748b;">中奖金额</div>
+                        <div style="font-size: 24px; color:#ef4444; font-weight:bold; margin: 4px 0;">¥${bet.payout.toFixed(0)}</div>
+                        <div style="font-size:11px; color:#94a3b8;">赔率 ${oddsDisplay}</div>
+                     </div>
+                     ` : ''}
+                  </div>
+              </td>
+            </tr>
+            <script>
+              window.toggleOrderDetail${index} = function(btn) {
+                const row = document.getElementById('detail-row-${index}');
+                if (row) {
+                  const isVisible = row.style.display !== 'none';
+                  row.style.display = isVisible ? 'none' : 'table-row';
+                  btn.textContent = isVisible ? '详情' : '收起';
+                }
+              };
+            </script>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+function updateSettleInfo() {
+  const summaryContainer = document.getElementById('settle-summary-header');
 
   if (summaryContainer) {
     const totalBets = bettingRecords.length;
     const totalAmount = bettingRecords.reduce((sum, r) => sum + r.totalAmount, 0);
 
-    // 解析期号 YYYYDDD
-    const year = currentPeriod.substring(0, 4);
-    const day = currentPeriod.substring(4);
-
     summaryContainer.innerHTML = `
-      <div style="font-size: 24px; font-weight: 800; color: #f1f5f9; margin-bottom: 12px;">
-        当前期号 <span style="color: #7c3aed; font-size: 28px;">${year}年${day}号</span>
-      </div>
-      <div style="font-size: 16px; color: #94a3b8;">
-        共 <strong style="color: #f1f5f9;">${totalBets}</strong> 笔订单，总金额 <strong style="color: #10b981;">¥${totalAmount.toFixed(2)}</strong>
-      </div>
+      <span class="info-stat">订单 <strong>${totalBets}</strong> 笔</span>
+      <span class="info-stat">总额 <strong class="amount">¥${totalAmount.toFixed(2)}</strong></span>
     `;
   }
+  
+  // 更新期数选择器
+  updatePeriodSelector();
 }
 
 // 执行开奖结算
@@ -1772,8 +2030,14 @@ function performSettlement() {
     // 渲染结算结果 (传入所有号码)
     renderSettlementResult(drawNumbers, results);
 
+    // 渲染订单详情标签页
+    renderOrdersTabs(results.bets);
+
     // 更新历史记录展示
     renderDrawHistory();
+    
+    // 更新期数选择器
+    updatePeriodSelector();
 
     // 清空当前投注记录，准备下一期（用户需求：结算后通常需要手动清空或者自动进入下期）
     // 这里保持当前状态，但应该有一个视觉反馈
@@ -1944,210 +2208,142 @@ function calculateSettlementFixed(specialNumber) {
 }
 
 
-// 开奖动画（简化版）
+// 直接执行回调，不显示动画
 function showDrawAnimation(finalNumber, callback) {
-  const overlay = document.getElementById('draw-animation-overlay');
-  const ball = document.getElementById('draw-spinning-ball');
-  const animText = overlay.querySelector('.draw-animation-text');
-
-  overlay.classList.add('active');
-  ball.textContent = '?';
-  animText.textContent = '开奖中...';
-
-  // 简单延迟后直接显示结果
-  setTimeout(() => {
-    const waveColor = getNumberWaveColor(finalNumber);
-    const zodiac = getZodiacForNumber(finalNumber);
-
-    ball.textContent = String(finalNumber).padStart(2, '0');
-    ball.className = `draw-spinning-ball ball-${waveColor}`;
-    animText.textContent = `开奖号码: ${finalNumber} · ${zodiac}`;
-
-    setTimeout(() => {
-      overlay.classList.remove('active');
-      ball.className = 'draw-spinning-ball';
-      callback();
-    }, 800);
-  }, 500);
+  callback();
 }
 
-// 渲染结算结果
 // 渲染结算结果
 function renderSettlementResult(drawNumbers, results) {
   const container = document.getElementById('settlement-result');
 
-  // 兼容旧的单一号码调用 (如果是数字)
   if (typeof drawNumbers === 'number') {
-    // 构造一个假数组, 只有特码
     drawNumbers = [0, 0, 0, 0, 0, 0, drawNumbers];
   }
 
-  const specialNumber = drawNumbers[6]; // 第7个是特码
-  const waveColor = getNumberWaveColor(specialNumber);
-  const zodiac = getZodiacForNumber(specialNumber);
+  const specialNumber = drawNumbers[6];
   const attrs = getNumberAttributes(specialNumber);
 
   const profitClass = results.profit > 0 ? 'profit' : results.profit < 0 ? 'loss' : 'neutral';
   const bannerClass = results.profit > 0 ? 'banner-profit' : results.profit < 0 ? 'banner-loss' : 'banner-neutral';
   const profitSign = results.profit >= 0 ? '+' : '';
 
-  // 分离中奖和未中奖的订单
   const winBets = results.bets.filter(b => b.hasWin);
   const loseBets = results.bets.filter(b => !b.hasWin);
 
-  // 生成开奖号码球HTML
+  // 生成开奖号码球HTML - 紧凑版
   const drawBallsHtml = drawNumbers.map((num, idx) => {
-    if (!num) return ''; // 兼容旧数据
+    if (!num) return '';
     const wColor = getNumberWaveColor(num);
     const z = getZodiacForNumber(num);
     const isSpecial = idx === 6;
-
-    return `
-      <div class="settle-draw-ball ball-${wColor}" style="${isSpecial ? 'transform: scale(1.1); box-shadow: 0 0 10px rgba(0,0,0,0.3);' : 'width: 50px; height: 50px; font-size: 20px;'}">
+    return `<div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 2px;">
+      <div class="settle-draw-ball ball-${wColor}" style="${isSpecial ? 'width:48px;height:48px;font-size:20px;' : ''}">
         ${String(num).padStart(2, '0')}
-        <span class="draw-ball-zodiac" style="${isSpecial ? '' : 'font-size: 10px;'}">${z}</span>
-        ${isSpecial ? '<div style="position: absolute; top: -10px; font-size: 10px; background: #f59e0b; padding: 0 4px; border-radius: 4px; color: black; font-weight: bold;">特</div>' : ''}
+        ${isSpecial ? '<span style="position:absolute;top:-8px;font-size:9px;background:#f59e0b;padding:0 3px;border-radius:3px;color:#000;font-weight:bold;">特</span>' : ''}
       </div>
-    `;
+      <span style="font-size:10px;color:#64748b;margin-top:2px;">${z}</span>
+    </div>`;
   }).join('');
 
   let html = `
     <div class="settle-result-container">
-      <!-- 开奖号码信息 -->
       <div class="settle-result-header">
-        <div class="settle-draw-info" style="flex-direction: column; align-items: start;">
-          <h3 style="margin-bottom: 12px; color: #94a3b8; font-size: 14px;">本期开奖号码</h3>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
-            ${drawBallsHtml}
-          </div>
+        <div class="settle-draw-info" style="flex-direction:column;align-items:start;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:8px;">开奖号码</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${drawBallsHtml}</div>
           <div class="settle-draw-attrs">
-            <span style="color: #64748b; font-size: 12px; margin-right: 8px;">特码属性:</span>
+            <span style="color:#64748b;font-size:11px;margin-right:6px;">特码:</span>
             ${attrs.map(a => `<span class="draw-attr-tag ${a.class}">${a.text}</span>`).join('')}
           </div>
         </div>
-        
-        <!-- 结算概要 -->
         <div class="settle-summary-grid">
           <div class="settle-summary-card">
-            <div class="settle-summary-label">总投注笔数</div>
+            <div class="settle-summary-label">订单</div>
             <div class="settle-summary-value">${results.totalBets}</div>
           </div>
           <div class="settle-summary-card">
-            <div class="settle-summary-label">总投注金额</div>
-            <div class="settle-summary-value">¥${results.totalBetAmount.toFixed(2)}</div>
+            <div class="settle-summary-label">投注额</div>
+            <div class="settle-summary-value">¥${results.totalBetAmount.toFixed(0)}</div>
           </div>
           <div class="settle-summary-card">
-            <div class="settle-summary-label">中奖笔数</div>
+            <div class="settle-summary-label">中奖</div>
             <div class="settle-summary-value win-count">${results.winCount}</div>
           </div>
           <div class="settle-summary-card">
-            <div class="settle-summary-label">总赔付</div>
-            <div class="settle-summary-value loss">¥${results.totalPayout.toFixed(2)}</div>
+            <div class="settle-summary-label">赔付</div>
+            <div class="settle-summary-value loss">¥${results.totalPayout.toFixed(0)}</div>
           </div>
         </div>
       </div>
 
-      <!-- 盈亏大字显示 -->
       <div class="settle-profit-banner ${bannerClass}">
-        <div class="settle-profit-title">庄家本期盈亏</div>
+        <div class="settle-profit-title">庄家盈亏</div>
         <div class="settle-profit-amount ${profitClass}">${profitSign}¥${Math.abs(results.profit).toFixed(2)}</div>
-        <div class="settle-profit-subtitle">
-          收入 ¥${results.totalBetAmount.toFixed(2)} - 赔付 ¥${results.totalPayout.toFixed(2)} = ${profitSign}¥${Math.abs(results.profit).toFixed(2)}
-        </div>
+        <div class="settle-profit-subtitle">收入 ¥${results.totalBetAmount.toFixed(0)} − 赔付 ¥${results.totalPayout.toFixed(0)}</div>
       </div>`;
 
-  // 中奖订单明细
   if (winBets.length > 0) {
     html += `
       <div class="settle-bets-section">
-        <h3>🎉 中奖订单 (${winBets.length} 单)</h3>
-        <table class="settle-bets-table">
-          <thead>
-            <tr>
-              <th>订单号</th>
-              <th>玩家</th>
-              <th>号码</th>
-              <th>每注</th>
-              <th>赔付</th>
-              <th>结果</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${winBets.map(bet => {
+        <h3>🎉 中奖订单 (${winBets.length})</h3>
+        <table class="settle-bets-table"><thead><tr>
+          <th>订单号</th><th>玩家</th><th>号码</th><th>每注</th><th>赔付</th><th>结果</th>
+        </tr></thead><tbody>
+        ${winBets.map(bet => {
       const numbersHtml = bet.betNumbers.map(n => {
         const bWave = getNumberWaveColor(n);
-        const isWinNum = n === specialNumber; // Changed from drawNumber to specialNumber
-        return `<span class="number-badge ball-${bWave}" ${isWinNum ? 'style="box-shadow: 0 0 8px #fbbf24; outline: 2px solid #f59e0b;"' : ''}>${String(n).padStart(2, '0')}</span>`;
+        const isWinNum = n === specialNumber;
+        return `<span class="number-badge ball-${bWave}" ${isWinNum ? 'style="outline:2px solid #f59e0b;"' : ''}>${String(n).padStart(2, '0')}</span>`;
       }).join(' ');
-      return `
-                <tr>
-                  <td class="col-order-id">${bet.orderId}</td>
-                  <td class="td-player">${bet.playerName}</td>
-                  <td class="td-number">${numbersHtml}</td>
-                  <td class="td-amount">¥${bet.betAmountPerNumber.toFixed(2)}</td>
-                  <td class="td-payout payout-win">-¥${bet.payout.toFixed(2)}</td>
-                  <td><span class="settle-result-badge badge-win">${bet.winNumbers.length}中</span></td>
-                </tr>`;
+      return `<tr>
+        <td class="col-order-id">${bet.orderId}</td>
+        <td>${bet.playerName}</td>
+        <td class="td-number">${numbersHtml}</td>
+        <td>¥${bet.betAmountPerNumber.toFixed(2)}</td>
+        <td class="td-payout payout-win">-¥${bet.payout.toFixed(2)}</td>
+        <td><span class="settle-result-badge badge-win">${bet.winNumbers.length}中</span></td>
+      </tr>`;
     }).join('')}
-          </tbody>
-        </table>
+        </tbody></table>
       </div>`;
   }
 
-  // 未中奖订单明细
   if (loseBets.length > 0) {
     html += `
       <div class="settle-bets-section">
-        <h3>💼 未中奖订单 (${loseBets.length} 单)</h3>
-        <table class="settle-bets-table">
-          <thead>
-            <tr>
-              <th>订单号</th>
-              <th>玩家</th>
-              <th>号码</th>
-              <th>每注</th>
-              <th>收入</th>
-              <th>结果</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${loseBets.map(bet => {
+        <h3>💼 未中奖 (${loseBets.length})</h3>
+        <table class="settle-bets-table"><thead><tr>
+          <th>订单号</th><th>玩家</th><th>号码</th><th>每注</th><th>收入</th><th>结果</th>
+        </tr></thead><tbody>
+        ${loseBets.map(bet => {
       const numbersHtml = bet.betNumbers.map(n => {
         const bWave = getNumberWaveColor(n);
         return `<span class="number-badge ball-${bWave}">${String(n).padStart(2, '0')}</span>`;
       }).join(' ');
-      return `
-                <tr>
-                  <td class="col-order-id">${bet.orderId}</td>
-                  <td class="td-player">${bet.playerName}</td>
-                  <td class="td-number">${numbersHtml}</td>
-                  <td class="td-amount">¥${bet.betAmountPerNumber.toFixed(2)}</td>
-                  <td class="td-payout payout-lose">+¥${bet.totalAmount.toFixed(2)}</td>
-                  <td><span class="settle-result-badge badge-lose">未中</span></td>
-                </tr>`;
+      return `<tr>
+        <td class="col-order-id">${bet.orderId}</td>
+        <td>${bet.playerName}</td>
+        <td class="td-number">${numbersHtml}</td>
+        <td>¥${bet.betAmountPerNumber.toFixed(2)}</td>
+        <td class="td-payout payout-lose">+¥${bet.totalAmount.toFixed(2)}</td>
+        <td><span class="settle-result-badge badge-lose">未中</span></td>
+      </tr>`;
     }).join('')}
-          </tbody>
-        </table>
+        </tbody></table>
       </div>`;
   }
 
-  // 无投注提示
   if (results.totalBets === 0) {
-    html += `
-      <div class="settle-bets-section">
-        <div class="empty-state">
-          <div class="empty-icon">📭</div>
-          <div class="empty-text">本期无投注记录</div>
-        </div>
-      </div>`;
+    html += `<div class="settle-bets-section"><div class="empty-state"><div class="empty-text">本期无投注记录</div></div></div>`;
   }
 
   html += '</div>';
-
   container.innerHTML = html;
 }
 
-// 显示历史记录详情 (使用 Modal)
+// 显示历史记录详情 (使用 Modal) - 已废弃，改用selectPeriodFromHistory
+/*
 function showHistoryDetail(id) {
   const record = drawHistory.find(r => r.id === id);
   if (!record) return;
@@ -2268,6 +2464,7 @@ function showHistoryDetail(id) {
 
   modal.classList.add('active');
 }
+*/
 
 function renderBetTable(bets) {
   if (!bets || bets.length === 0) return '<div style="text-align:center; padding: 40px; color: #64748b;">暂无订单记录</div>';
@@ -2430,18 +2627,15 @@ function saveToHistory(drawNumbers, results) {
 }
 
 // 渲染历史开奖记录
-// 渲染历史开奖记录
-// 渲染历史开奖记录
 function renderDrawHistory() {
   const container = document.getElementById('settle-history-list');
-  const countEl = document.getElementById('history-count');
+  const summaryCard = document.getElementById('history-summary-card');
 
   if (!container) return;
 
-  // 1. 数据去重 (保留每期最新的一条)
+  // 数据去重
   const uniqueDrawHistory = [];
   const seenPeriods = new Set();
-  // 假设 drawHistory 是按时间倒序(unshift)的，直接遍历保留遇到的第一个即可
   for (const record of drawHistory) {
     if (!seenPeriods.has(record.period)) {
       uniqueDrawHistory.push(record);
@@ -2449,65 +2643,112 @@ function renderDrawHistory() {
     }
   }
 
-  if (countEl) countEl.textContent = `共 ${uniqueDrawHistory.length} 期`;
-
   if (uniqueDrawHistory.length === 0) {
-    container.innerHTML = `
-      <div class="empty-history">
-        <div class="empty-icon">📜</div>
-        <div class="empty-text">暂无历史记录</div>
-      </div>`;
+    container.innerHTML = `<div class="empty-history"><div class="empty-icon">📜</div><div class="empty-text">暂无历史记录</div></div>`;
+    if (summaryCard) summaryCard.style.display = 'none';
     return;
   }
 
-  container.innerHTML = uniqueDrawHistory.map(record => {
-    // 兼容新旧数据格式
-    let numbers = [];
+  // 计算总统计
+  const totalStats = {
+    totalPeriods: uniqueDrawHistory.length,
+    totalBets: uniqueDrawHistory.reduce((sum, r) => sum + r.totalBets, 0),
+    totalBetAmount: uniqueDrawHistory.reduce((sum, r) => sum + r.totalBetAmount, 0),
+    totalPayout: uniqueDrawHistory.reduce((sum, r) => sum + r.totalPayout, 0),
+    totalProfit: uniqueDrawHistory.reduce((sum, r) => sum + r.profit, 0),
+    winPeriods: uniqueDrawHistory.filter(r => r.profit > 0).length,
+    losePeriods: uniqueDrawHistory.filter(r => r.profit < 0).length
+  };
 
+  // 渲染总统计卡片
+  if (summaryCard) {
+    summaryCard.style.display = 'block';
+    const profitClass = totalStats.totalProfit >= 0 ? 'text-green' : 'text-red';
+    const profitSign = totalStats.totalProfit >= 0 ? '+' : '';
+    
+    summaryCard.innerHTML = `
+      <div class="history-summary-header">
+        <h3>📊 历史总统计</h3>
+        <span class="summary-period-count">共 ${totalStats.totalPeriods} 期</span>
+      </div>
+      <div class="history-summary-grid">
+        <div class="summary-stat-item">
+          <div class="summary-stat-label">总订单数</div>
+          <div class="summary-stat-value">${totalStats.totalBets}</div>
+        </div>
+        <div class="summary-stat-item">
+          <div class="summary-stat-label">总投注额</div>
+          <div class="summary-stat-value">¥${totalStats.totalBetAmount.toFixed(0)}</div>
+        </div>
+        <div class="summary-stat-item">
+          <div class="summary-stat-label">总赔付</div>
+          <div class="summary-stat-value text-red">¥${totalStats.totalPayout.toFixed(0)}</div>
+        </div>
+        <div class="summary-stat-item highlight">
+          <div class="summary-stat-label">总盈亏</div>
+          <div class="summary-stat-value ${profitClass}" style="font-size: 24px;">${profitSign}¥${Math.abs(totalStats.totalProfit).toFixed(0)}</div>
+        </div>
+        <div class="summary-stat-item">
+          <div class="summary-stat-label">盈利期数</div>
+          <div class="summary-stat-value text-green">${totalStats.winPeriods}</div>
+        </div>
+        <div class="summary-stat-item">
+          <div class="summary-stat-label">亏损期数</div>
+          <div class="summary-stat-value text-red">${totalStats.losePeriods}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 渲染历史列表
+  container.innerHTML = uniqueDrawHistory.map(record => {
+    let numbers = [];
     if (record.drawNumbers && Array.isArray(record.drawNumbers)) {
       numbers = record.drawNumbers;
       while (numbers.length < 7) numbers.push(0);
     } else {
-      const special = record.drawNumber || 0;
-      numbers = [0, 0, 0, 0, 0, 0, special];
+      numbers = [0, 0, 0, 0, 0, 0, record.drawNumber || 0];
     }
 
-    // 确定盈亏样式
     const profitColor = record.profit > 0 ? '#4ade80' : record.profit < 0 ? '#ef4444' : '#94a3b8';
-    const profitStr = record.profit >= 0 ? `+¥${record.profit.toFixed(2)}` : `-¥${Math.abs(record.profit).toFixed(2)}`;
+    const profitStr = record.profit >= 0 ? `+¥${record.profit.toFixed(0)}` : `-¥${Math.abs(record.profit).toFixed(0)}`;
 
-    // 生成号码球 (紧凑版，带生肖)
     const ballsHtml = numbers.map((n, idx) => {
       if (!n) return '';
       const bColor = getNumberWaveColor(n);
       const isSpecial = idx === 6;
       const specialClass = isSpecial ? 'special' : '';
       const z = getZodiacForNumber(n);
-
-      return `<div style="display:inline-flex; flex-direction:column; align-items:center; margin:0 2px;">
-        <div class="history-mini-ball ball-${bColor} ${specialClass}" style="width:22px; height:22px; line-height:22px; font-size:11px; position:relative;">
-          ${String(n).padStart(2, '0')}
-          ${isSpecial ? '<span style="position:absolute; top:-5px; right:-5px; font-size:7px; background:#f59e0b; padding:0 2px; border-radius:3px; color:#000; font-weight:bold; line-height:1.2;">特</span>' : ''}
-        </div>
-        <span style="font-size:9px; color:#64748b; line-height:1; margin-top:1px;">${z}</span>
+      return `<div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 1px;">
+        <div class="history-mini-ball ball-${bColor} ${specialClass}">${String(n).padStart(2, '0')}</div>
+        <span style="font-size:9px;color:#64748b;line-height:1;margin-top:1px;">${z}</span>
       </div>`;
     }).join('');
 
     return `
-      <div class="history-item" onclick="showHistoryDetail(${record.id})" style="cursor:pointer; padding:8px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid #1e293b;">
-        <div style="min-width:110px; flex-shrink:0;">
-          <div style="font-size:13px; font-weight:bold; color:#e2e8f0;">第 ${record.period} 期</div>
-          <div style="font-size:10px; color:#475569; margin-top:1px;">${record.drawTime}</div>
+      <div class="history-item" onclick="selectPeriodFromHistory('${record.period}')">
+        <div style="min-width:100px;flex-shrink:0;">
+          <div style="font-size:13px;font-weight:bold;color:#e2e8f0;">${record.period}</div>
+          <div style="font-size:10px;color:#475569;margin-top:1px;">${record.drawTime}</div>
         </div>
-        <div style="display:flex; align-items:center; flex:1;">${ballsHtml}</div>
-        <div style="display:flex; gap:16px; flex-shrink:0; align-items:center;">
-          <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">投注</div><div style="font-size:12px; font-weight:bold; color:#cbd5e1;">${record.totalBets}笔</div></div>
-          <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">收入</div><div style="font-size:12px; font-weight:bold; color:#cbd5e1;">¥${record.totalBetAmount.toFixed(0)}</div></div>
-          <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">赔付</div><div style="font-size:12px; font-weight:bold; color:#f87171;">¥${record.totalPayout.toFixed(0)}</div></div>
-          <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">盈亏</div><div style="font-size:12px; font-weight:bold; color:${profitColor};">${profitStr}</div></div>
+        <div style="display:flex;align-items:center;flex:1;">${ballsHtml}</div>
+        <div style="display:flex;gap:14px;flex-shrink:0;align-items:center;font-size:12px;">
+          <span style="color:#cbd5e1;">${record.totalBets}笔</span>
+          <span style="color:#cbd5e1;">¥${record.totalBetAmount.toFixed(0)}</span>
+          <span style="color:#f87171;">-¥${record.totalPayout.toFixed(0)}</span>
+          <span style="color:${profitColor};font-weight:bold;">${profitStr}</span>
         </div>
       </div>`;
   }).join('');
+}
+
+// 从历史列表中选择期数
+function selectPeriodFromHistory(period) {
+  const selector = document.getElementById('period-selector');
+  if (selector) {
+    selector.value = period;
+    loadPeriodData(period);
+  }
 }
 
 
@@ -2552,6 +2793,9 @@ function initSettlementPage() {
   if (settleBtn) {
     settleBtn.addEventListener('click', performSettlement);
   }
+  
+  // 初始化期数选择器
+  updatePeriodSelector();
 
   // 绑定输入框回车跳跃
   const inputs = document.querySelectorAll('.settle-draw-input');

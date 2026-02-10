@@ -1330,293 +1330,256 @@ body {
 .settle-input-card {
   background: #1e293b;
   border: 1px solid #334155;
-  border-radius: 16px;
-  padding: 24px;
-}
-
-.settle-input-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.settle-icon {
-  font-size: 40px;
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(124, 58, 237, 0.1);
   border-radius: 12px;
-  border: 1px solid rgba(124, 58, 237, 0.3);
+  padding: 20px;
 }
 
-.settle-input-desc {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.settle-input-desc strong {
-  color: #7c3aed;
-}
-
-.settle-input-body {
+.settle-info-bar {
   display: flex;
-  align-items: stretch;
-  gap: 16px;
-  margin-bottom: 20px;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #334155;
+  font-size: 14px;
+  color: #94a3b8;
 }
 
-.settle-number-input-wrapper {
-  flex: 1;
+/* 期数选择器栏 */
+.period-selector-bar {
   display: flex;
   align-items: center;
   gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.period-selector-bar label {
+  font-size: 14px;
+  color: #94a3b8;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.period-select {
+  flex: 1;
+  min-width: 280px;
+  max-width: 400px;
+  padding: 10px 16px;
   background: #0f172a;
-  border: 2px solid #334155;
-  border-radius: 12px;
-  padding: 8px 16px;
-}
-
-.settle-number-input-wrapper:focus-within {
-  border-color: #7c3aed;
-}
-
-.settle-number-input {
-  flex: 1;
-  border: none;
-  background: transparent;
+  border: 1px solid #334155;
+  border-radius: 8px;
   color: #f1f5f9;
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.period-select:hover {
+  border-color: #3b82f6;
+  background: #1e293b;
+}
+
+.period-select:focus {
   outline: none;
-  padding: 8px 0;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.settle-number-input::placeholder {
-  color: #475569;
+.settle-info-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
 }
 
-.settle-number-input::-webkit-outer-spin-button,
-.settle-number-input::-webkit-inner-spin-button {
+.settle-info-bar .info-period {
+  font-weight: 700;
+  color: #f1f5f9;
+  font-size: 15px;
+}
+
+.settle-info-bar .info-stat,
+.settle-info-summary .info-stat {
+  color: #94a3b8;
+}
+
+.settle-info-bar .info-stat strong,
+.settle-info-summary .info-stat strong {
+  color: #f1f5f9;
+  font-weight: 700;
+}
+
+.settle-info-bar .info-stat .amount,
+.settle-info-summary .info-stat .amount {
+  color: #10b981;
+}
+
+.settle-draw-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.settle-draw-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.settle-draw-label.settle-label-special {
+  color: #f59e0b;
+  margin-left: 12px;
+}
+
+.settle-draw-inputs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.settle-draw-input {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid #475569;
+  background: #0f172a;
+  color: #f1f5f9;
+  font-size: 17px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.settle-draw-input::-webkit-outer-spin-button,
+.settle-draw-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-.settle-number-input[type=number] {
-  -moz-appearance: textfield;
+.settle-draw-input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
 }
 
-.settle-number-preview {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+.settle-draw-input.special {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.settle-draw-input.special:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+.settle-actions {
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 22px;
-  font-weight: 800;
-  color: white;
-  background: #334155;
+  gap: 12px;
+  margin-top: 16px;
 }
 
-.settle-number-preview.ball-red {
-  background: radial-gradient(circle, #ef4444, #dc2626);
-}
-
-.settle-number-preview.ball-blue {
-  background: radial-gradient(circle, #3b82f6, #2563eb);
-}
-
-.settle-number-preview.ball-green {
-  background: radial-gradient(circle, #10b981, #059669);
-}
-
-.settle-preview-placeholder {
-  color: #64748b;
-  font-size: 24px;
-}
-
-.settle-number-grid {
-  display: grid;
-  grid-template-columns: repeat(17, 1fr);
-  gap: 4px;
-}
-
-.settle-pick-ball {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  border: 2px solid;
-  background: transparent;
-}
-
-.settle-pick-ball.ball-red {
-  border-color: #ef4444;
-  color: #ef4444;
-}
-
-.settle-pick-ball.ball-blue {
-  border-color: #3b82f6;
-  color: #3b82f6;
-}
-
-.settle-pick-ball.ball-green {
-  border-color: #10b981;
-  color: #10b981;
-}
-
-.settle-pick-ball.ball-red:hover,
-.settle-pick-ball.ball-red.active {
-  background: #ef4444;
-  color: white;
-}
-
-.settle-pick-ball.ball-blue:hover,
-.settle-pick-ball.ball-blue.active {
-  background: #3b82f6;
-  color: white;
-}
-
-.settle-pick-ball.ball-green:hover,
-.settle-pick-ball.ball-green.active {
-  background: #10b981;
-  color: white;
-}
-
-.draw-animation-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  z-index: 2000;
-  align-items: center;
-  justify-content: center;
-}
-
-.draw-animation-overlay.active {
-  display: flex;
-}
-
-.draw-animation-content {
-  text-align: center;
-}
-
-.draw-spinning-ball {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48px;
-  font-weight: 800;
-  color: white;
-  margin: 0 auto 24px;
-}
-
-.draw-spinning-ball.ball-red {
-  background: radial-gradient(circle, #ef4444, #dc2626);
-}
-
-.draw-spinning-ball.ball-blue {
-  background: radial-gradient(circle, #3b82f6, #2563eb);
-}
-
-.draw-spinning-ball.ball-green {
-  background: radial-gradient(circle, #10b981, #059669);
-}
-
-.draw-animation-text {
-  font-size: 20px;
-  font-weight: 700;
+.btn-fetch {
+  padding: 10px 16px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
   color: #94a3b8;
-  letter-spacing: 4px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-fetch:hover {
+  background: #1e293b;
+  color: #f1f5f9;
+  border-color: #475569;
+}
+
+.btn-fetch svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 结算结果 */
+.settle-result-container {
+  margin-top: 20px;
 }
 
 .settle-result-header {
   background: #1e293b;
   border: 1px solid #334155;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
 }
 
 .settle-draw-info {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #334155;
 }
 
 .settle-draw-ball {
-  width: 80px;
-  height: 80px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   color: white;
+  position: relative;
 }
 
 .settle-draw-ball.ball-red {
-  background: radial-gradient(circle, #ef4444, #dc2626);
+  background: #ef4444;
 }
 
 .settle-draw-ball.ball-blue {
-  background: radial-gradient(circle, #3b82f6, #2563eb);
+  background: #3b82f6;
 }
 
 .settle-draw-ball.ball-green {
-  background: radial-gradient(circle, #10b981, #059669);
+  background: #10b981;
 }
 
 .draw-ball-zodiac {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
-  margin-top: 2px;
-}
-
-.settle-draw-details {
-  flex: 1;
-}
-
-.settle-draw-details h3 {
-  font-size: 22px;
-  font-weight: 800;
-  color: #f1f5f9;
-  margin-bottom: 6px;
+  margin-top: 1px;
 }
 
 .settle-draw-attrs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .draw-attr-tag {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
   font-weight: 600;
-  background: #1e293b;
+  background: #0f172a;
   border: 1px solid #334155;
   color: #94a3b8;
 }
@@ -1624,44 +1587,43 @@ body {
 .draw-attr-tag.tag-red {
   color: #fca5a5;
   border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .draw-attr-tag.tag-blue {
   color: #93c5fd;
   border-color: rgba(59, 130, 246, 0.3);
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .draw-attr-tag.tag-green {
   color: #6ee7b7;
   border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .settle-summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
 .settle-summary-card {
   background: #0f172a;
   border: 1px solid #334155;
-  border-radius: 12px;
-  padding: 18px;
+  border-radius: 8px;
+  padding: 12px;
   text-align: center;
 }
 
 .settle-summary-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #64748b;
-  text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .settle-summary-value {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   color: #f1f5f9;
 }
@@ -1680,21 +1642,21 @@ body {
 
 .settle-profit-banner {
   background: #1e293b;
-  border: 2px solid;
-  border-radius: 16px;
-  padding: 24px;
+  border: 2px solid #475569;
+  border-radius: 12px;
+  padding: 20px;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .settle-profit-banner.banner-profit {
   border-color: #10b981;
-  background: linear-gradient(135deg, #0f172a, rgba(6, 78, 59, 0.1));
+  background: rgba(6, 78, 59, 0.1);
 }
 
 .settle-profit-banner.banner-loss {
   border-color: #ef4444;
-  background: linear-gradient(135deg, #0f172a, rgba(127, 29, 29, 0.1));
+  background: rgba(127, 29, 29, 0.1);
 }
 
 .settle-profit-banner.banner-neutral {
@@ -1702,13 +1664,13 @@ body {
 }
 
 .settle-profit-title {
-  font-size: 16px;
+  font-size: 13px;
   color: #94a3b8;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .settle-profit-amount {
-  font-size: 42px;
+  font-size: 36px;
   font-weight: 800;
 }
 
@@ -1725,27 +1687,24 @@ body {
 }
 
 .settle-profit-subtitle {
-  font-size: 14px;
+  font-size: 12px;
   color: #64748b;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .settle-bets-section {
   background: #1e293b;
   border: 1px solid #334155;
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
 .settle-bets-section h3 {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #f1f5f9;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .td-payout.payout-win {
@@ -1759,24 +1718,23 @@ body {
 }
 
 .settle-result-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: 3px 8px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 700;
 }
 
 .settle-result-badge.badge-win {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.15);
   color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .settle-result-badge.badge-lose {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.15);
   color: #6ee7b7;
-  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+/* 历史记录 */
 .history-count {
   font-size: 13px;
   color: #64748b;
@@ -1785,7 +1743,7 @@ body {
 .settle-history-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
 .empty-history {
@@ -1796,124 +1754,49 @@ body {
 
 .history-item {
   display: flex;
-  flex-direction: row;
-  /* Keep row for stats on right */
-  gap: 16px;
-  padding: 16px;
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.history-main-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.history-period-row {
-  display: flex;
   align-items: center;
   gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #1e293b;
+  cursor: pointer;
 }
 
-.history-period {
-  font-size: 16px;
-  font-weight: 700;
-  color: #f1f5f9;
+.history-item:hover {
+  background: rgba(30, 41, 59, 0.5);
 }
 
-.history-time {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.history-numbers-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.history-label {
-  font-size: 13px;
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-.history-balls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* Small ball style for history list */
 .history-mini-ball {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 700;
   color: white;
+  line-height: 22px;
   position: relative;
 }
 
 .history-mini-ball.ball-red {
-  background: radial-gradient(circle, #ef4444, #dc2626);
+  background: #ef4444;
 }
 
 .history-mini-ball.ball-blue {
-  background: radial-gradient(circle, #3b82f6, #2563eb);
+  background: #3b82f6;
 }
 
 .history-mini-ball.ball-green {
-  background: radial-gradient(circle, #10b981, #059669);
+  background: #10b981;
 }
 
 .history-mini-ball.special {
-  width: 32px;
-  height: 32px;
-  font-size: 15px;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
   border: 2px solid #fbbf24;
-  box-shadow: 0 0 5px rgba(251, 191, 36, 0.5);
-  margin-left: 4px;
-}
-
-.history-stats {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  min-width: fit-content;
-}
-
-.history-stat {
-  text-align: center;
-}
-
-.history-stat-label {
-  font-size: 10px;
-  color: #64748b;
-  text-transform: uppercase;
-  margin-bottom: 2px;
-}
-
-.history-stat-value {
-  font-size: 15px;
-  font-weight: 700;
-  color: #f1f5f9;
-}
-
-.history-stat-value.profit {
-  color: #10b981;
-}
-
-.history-stat-value.loss {
-  color: #ef4444;
+  margin-left: 2px;
 }
 
 /* 弹窗 */
@@ -2223,6 +2106,22 @@ body {
   .input-group {
     min-width: 100%;
   }
+  
+  .period-selector-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .period-select {
+    min-width: 100%;
+    max-width: 100%;
+  }
+  
+  .settle-info-summary {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
 
   /* Filter Panel Adjustments */
   .filter-panel {
@@ -2254,18 +2153,24 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .settle-draw-info {
-    flex-direction: column;
-    text-align: center;
+  .settle-draw-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .settle-draw-input {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .settle-info-bar {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .settle-profit-amount {
-    font-size: 32px;
-  }
-
-  .history-stats {
-    flex-wrap: wrap;
-    gap: 10px;
+    font-size: 28px;
   }
 }
 
@@ -2286,92 +2191,6 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #8b5cf6, #f472b6);
-}
-
-/* 7-ball Input Styles */
-.settle-draw-inputs {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-  margin: 20px 0;
-}
-
-.settle-draw-input {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 2px solid #475569;
-  background: #0f172a;
-  color: #f1f5f9;
-  font-size: 18px;
-  font-weight: 700;
-  text-align: center;
-  outline: none;
-  transition: all 0.2s;
-  -moz-appearance: textfield;
-}
-
-.settle-draw-input::-webkit-outer-spin-button,
-.settle-draw-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.settle-draw-input:focus {
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.2);
-  transform: scale(1.1);
-}
-
-.settle-separator {
-  font-size: 24px;
-  color: #64748b;
-  font-weight: 300;
-  margin: 0 4px;
-}
-
-.settle-draw-input.special {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
-}
-
-.settle-draw-input.special:focus {
-  border-color: #f59e0b;
-  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
-}
-
-.btn-fetch {
-  padding: 12px 20px;
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 10px;
-  color: #94a3b8;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-}
-
-.btn-fetch:hover {
-  background: #1e293b;
-  color: #f1f5f9;
-  border-color: #475569;
-}
-
-.btn-fetch svg {
-  width: 18px;
-  height: 18px;
-}
-
-.input-actions {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-top: 24px;
 }
 
 /* History Detail Modal Styles */
@@ -2478,4 +2297,171 @@ body {
 
 .text-green {
   color: #10b981;
+}
+
+/* 订单详情标签页 */
+.settle-orders-section {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 0;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.settle-orders-tabs {
+  display: flex;
+  gap: 0;
+  background: #0f172a;
+  border-bottom: 1px solid #334155;
+}
+
+.settle-tab-btn {
+  flex: 1;
+  padding: 14px 20px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 3px solid transparent;
+}
+
+.settle-tab-btn:hover {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.settle-tab-btn.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+  background: #1e293b;
+}
+
+.settle-orders-content {
+  padding: 20px;
+}
+
+.settle-orders-pane {
+  display: none;
+}
+
+.settle-orders-pane.active {
+  display: block;
+}
+
+/* 历史总统计卡片 */
+.history-summary-card {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.history-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.history-summary-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #f1f5f9;
+}
+
+.summary-period-count {
+  font-size: 13px;
+  color: #64748b;
+  background: #0f172a;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.history-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
+
+.summary-stat-item {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.summary-stat-item:hover {
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+}
+
+.summary-stat-item.highlight {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  border-color: #3b82f6;
+}
+
+.summary-stat-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.summary-stat-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f1f5f9;
+}
+
+.text-green {
+  color: #4ade80 !important;
+}
+
+.text-red {
+  color: #ef4444 !important;
+}
+
+/* 历史列表项点击效果 */
+.history-item {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.history-item:hover {
+  background: #1e293b !important;
+  border-color: #3b82f6 !important;
+  transform: translateX(4px);
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+  .history-summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .history-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .settle-orders-tabs {
+    flex-direction: column;
+  }
+  
+  .settle-tab-btn {
+    border-bottom: none;
+    border-left: 3px solid transparent;
+  }
+  
+  .settle-tab-btn.active {
+    border-bottom-color: transparent;
+    border-left-color: #3b82f6;
+  }
 }
