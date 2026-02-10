@@ -2466,66 +2466,45 @@ function renderDrawHistory() {
 
     if (record.drawNumbers && Array.isArray(record.drawNumbers)) {
       numbers = record.drawNumbers;
-      // 确保至少有7个号码
       while (numbers.length < 7) numbers.push(0);
     } else {
       const special = record.drawNumber || 0;
-      numbers = [0, 0, 0, 0, 0, 0, special]; // 构造假数据展示
+      numbers = [0, 0, 0, 0, 0, 0, special];
     }
 
     // 确定盈亏样式
-    const profitClass = record.profit > 0 ? 'profit' : record.profit < 0 ? 'loss' : '';
+    const profitColor = record.profit > 0 ? '#4ade80' : record.profit < 0 ? '#ef4444' : '#94a3b8';
     const profitSign = record.profit >= 0 ? '+' : '';
 
-    // 生成所有号码球 (6平码 + 1特码)
+    // 生成号码球 (紧凑版，带生肖)
     const ballsHtml = numbers.map((n, idx) => {
       if (!n) return '';
       const bColor = getNumberWaveColor(n);
       const isSpecial = idx === 6;
       const specialClass = isSpecial ? 'special' : '';
-      const z = getZodiacForNumber(n); // 获取生肖
+      const z = getZodiacForNumber(n);
 
-      return `
-        <div style="display: flex; flex-direction: column; align-items: center; margin-left: 4px;">
-          <div class="history-mini-ball ball-${bColor} ${specialClass}" style="position: relative;">
-            ${String(n).padStart(2, '0')}
-            ${isSpecial ? '<div style="position: absolute; top: -6px; right: -6px; font-size: 8px; background: #f59e0b; padding: 0 3px; border-radius: 4px; color: black; font-weight: bold; line-height: 1.2;">特</div>' : ''}
-          </div>
-          <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">${z}</div>
+      return `<div style="display:inline-flex; flex-direction:column; align-items:center; margin:0 2px;">
+        <div class="history-mini-ball ball-${bColor} ${specialClass}" style="width:22px; height:22px; line-height:22px; font-size:11px; position:relative;">
+          ${String(n).padStart(2, '0')}
+          ${isSpecial ? '<span style="position:absolute; top:-5px; right:-5px; font-size:7px; background:#f59e0b; padding:0 2px; border-radius:3px; color:#000; font-weight:bold; line-height:1.2;">特</span>' : ''}
         </div>
-      `;
+        <span style="font-size:9px; color:#64748b; line-height:1; margin-top:1px;">${z}</span>
+      </div>`;
     }).join('');
 
     return `
-      <div class="history-item" onclick="showHistoryDetail(${record.id})" style="cursor: pointer; padding: 12px 16px;">
-        <div class="history-main-info" style="display: flex; align-items: center; margin-bottom: 12px;">
-          <div style="display: flex; align-items: center; gap: 12px; min-width: 220px;">
-            <span class="history-period" style="font-size: 14px; font-weight: bold; color: #f8fafc;">第 ${record.period} 期</span>
-            <span class="history-time" style="font-size: 12px; color: #64748b;">${record.drawTime}</span>
-          </div>
-          <div class="history-balls" style="display: flex; align-items: center; flex: 1; justify-content: center;">
-            ${ballsHtml}
-          </div>
-          <div style="width: 220px;"></div> <!-- 占位符，保持中间居中 -->
+      <div class="history-item" onclick="showHistoryDetail(${record.id})" style="cursor:pointer; padding:8px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid #1e293b;">
+        <div style="min-width:110px; flex-shrink:0;">
+          <div style="font-size:13px; font-weight:bold; color:#e2e8f0;">第 ${record.period} 期</div>
+          <div style="font-size:10px; color:#475569; margin-top:1px;">${record.drawTime}</div>
         </div>
-        
-        <div class="history-stats" style="border-top: 1px solid #334155; padding-top: 10px; margin-top: 0; display: flex; justify-content: space-between;">
-          <div class="history-stat" style="text-align: center;">
-            <div class="history-stat-label" style="font-size: 11px; color: #64748b;">投注</div>
-            <div class="history-stat-value" style="font-size: 13px; font-weight: bold; color: #cbd5e1;">${record.totalBets} 笔</div>
-          </div>
-          <div class="history-stat" style="text-align: center;">
-            <div class="history-stat-label" style="font-size: 11px; color: #64748b;">收入</div>
-            <div class="history-stat-value" style="font-size: 13px; font-weight: bold; color: #cbd5e1;">¥${record.totalBetAmount.toFixed(0)}</div>
-          </div>
-          <div class="history-stat" style="text-align: center;">
-            <div class="history-stat-label" style="font-size: 11px; color: #64748b;">赔付</div>
-            <div class="history-stat-value loss" style="font-size: 13px; font-weight: bold; color: #ef4444;">¥${record.totalPayout.toFixed(0)}</div>
-          </div>
-          <div class="history-stat" style="text-align: center;">
-            <div class="history-stat-label" style="font-size: 11px; color: #64748b;">盈亏</div>
-            <div class="history-stat-value ${profitClass}" style="font-size: 13px; font-weight: bold;">${profitSign}¥${Math.abs(record.profit).toFixed(0)}</div>
-          </div>
+        <div style="display:flex; align-items:center; flex:1;">${ballsHtml}</div>
+        <div style="display:flex; gap:16px; flex-shrink:0; align-items:center;">
+          <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">投注</div><div style="font-size:12px; font-weight:bold; color:#cbd5e1;">${record.totalBets}笔</div></div>
+          <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">收入</div><div style="font-size:12px; font-weight:bold; color:#cbd5e1;">¥${record.totalBetAmount.toFixed(0)}</div></div>
+          <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">赔付</div><div style="font-size:12px; font-weight:bold; color:#f87171;">¥${record.totalPayout.toFixed(0)}</div></div>
+          <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">盈亏</div><div style="font-size:12px; font-weight:bold; color:${profitColor};">${profitSign}¥${Math.abs(record.profit).toFixed(0)}</div></div>
         </div>
       </div>`;
   }).join('');
