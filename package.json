@@ -1,0 +1,18 @@
+{
+  "name": "lottery-betting-system",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public --binding DB=lottery_db",
+    "deploy": "wrangler pages deploy public",
+    "db:create": "wrangler d1 create lottery_db",
+    "db:migrate": "wrangler d1 migrations apply lottery_db --local",
+    "db:migrate:prod": "wrangler d1 migrations apply lottery_db"
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

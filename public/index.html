@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>庄家管理系统 - 49选7特码</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">🎲</div>
+        <div class="logo-text">庄家系统</div>
+      </div>
+
+      <nav class="nav-menu">
+        <a href="#analysis" class="nav-item active" data-page="analysis">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">风险分析</span>
+        </a>
+        <a href="#betting" class="nav-item" data-page="betting">
+          <span class="nav-icon">📝</span>
+          <span class="nav-text">投注管理</span>
+        </a>
+        <a href="#settlement" class="nav-item" data-page="settlement">
+          <span class="nav-icon">🎯</span>
+          <span class="nav-text">开奖结算</span>
+        </a>
+      </nav>
+
+      <div class="period-card">
+        <div class="period-label">当前期数</div>
+        <div class="period-number" id="sidebar-period">20260205001</div>
+        <div class="period-status status-open" id="sidebar-status">● 接受投注中</div>
+        <button class="btn-new-period" id="btn-new-period">开新盘</button>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 风险分析页面 -->
+      <div id="page-analysis" class="page-content active">
+        <header class="top-bar">
+          <div class="page-title">
+            <h1>风险分析看板</h1>
+            <p class="subtitle">实时监控投注风险，智能预警高危号码</p>
+          </div>
+          <div class="top-actions">
+            <button class="btn-icon" id="btn-refresh" title="刷新">🔄</button>
+            <button class="btn-icon" id="btn-export" title="导出">📥</button>
+          </div>
+        </header>
+
+        <!-- 关键指标 -->
+        <section class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">💰</div>
+            <div class="metric-content">
+              <div class="metric-label">总投注额</div>
+              <div class="metric-value" id="total-bets">¥0</div>
+              <div class="metric-change neutral" id="total-change">0 笔</div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">⚠️</div>
+            <div class="metric-content">
+              <div class="metric-label">最大赔付</div>
+              <div class="metric-value" id="max-payout">¥0</div>
+              <div class="metric-change negative" id="max-number">号码 -</div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon" style="background: linear-gradient(135deg, #10b981, #059669);">📊</div>
+            <div class="metric-content">
+              <div class="metric-label">投注笔数</div>
+              <div class="metric-value" id="bet-count">0</div>
+              <div class="metric-change neutral" id="avg-bet">平均 ¥0</div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">🎯</div>
+            <div class="metric-content">
+              <div class="metric-label">预期盈亏</div>
+              <div class="metric-value" id="expected-profit">¥0</div>
+              <div class="metric-change" id="profit-status">待计算</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 号码热力图 -->
+        <section class="heatmap-section">
+          <div class="section-header">
+            <h2>号码热力图</h2>
+            <div class="heatmap-controls">
+              <div class="sort-toggle" id="global-sort-toggle">
+                <button class="sort-btn active" data-sort="number">按号码排序</button>
+                <button class="sort-btn" data-sort="amount">按金额排序</button>
+              </div>
+              <div class="heatmap-legend">
+                <span class="legend-item"><span class="legend-dot" style="background: #1e293b;"></span>无投注</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #3b82f6;"></span>低风险</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #f59e0b;"></span>中风险</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #ef4444;"></span>高风险</span>
+              </div>
+            </div>
+          </div>
+          <div class="heatmap-grid-10x5" id="heatmap-grid"></div>
+
+          <!-- 横向柱状图 -->
+          <div class="horizontal-chart-section">
+            <div class="section-header">
+              <h3>号码投注分布 (1-49)</h3>
+              <div class="chart-toggle">
+                <button class="toggle-btn-h" data-type="bets">投注笔数</button>
+                <button class="toggle-btn-h active" data-type="amount">投注金额</button>
+              </div>
+            </div>
+            <div class="horizontal-chart" id="horizontal-chart"></div>
+          </div>
+        </section>
+
+        <!-- 两面玩法分析 -->
+        <div class="analysis-grid">
+          <div class="analysis-card">
+            <h3>大小分析</h3>
+            <div class="analysis-bars" id="size-analysis"></div>
+          </div>
+
+          <div class="analysis-card">
+            <h3>单双分析</h3>
+            <div class="analysis-bars" id="odd-even-analysis"></div>
+          </div>
+
+          <div class="analysis-card">
+            <h3>尾数分析</h3>
+            <div class="analysis-bars" id="tail-analysis"></div>
+          </div>
+        </div>
+
+        <!-- 波色分析 -->
+        <section class="distribution-section">
+          <div class="section-header">
+            <h2>波色分析</h2>
+          </div>
+          <div class="wave-grid" id="wave-analysis"></div>
+        </section>
+
+        <!-- 生肖分析 -->
+        <section class="distribution-section">
+          <div class="section-header">
+            <h2>生肖分析</h2>
+          </div>
+          <div class="zodiac-grid" id="zodiac-analysis"></div>
+        </section>
+
+        <!-- 五行分析 -->
+        <section class="distribution-section">
+          <div class="section-header">
+            <h2>五行分析</h2>
+          </div>
+          <div class="element-grid" id="element-analysis"></div>
+        </section>
+
+        <!-- 详细数据表格 -->
+        <section class="table-section">
+          <div class="section-header">
+            <h2>详细投注数据</h2>
+            <div class="table-filters">
+              <button class="filter-chip active" data-filter="all">全部</button>
+              <button class="filter-chip" data-filter="high">高风险</button>
+              <button class="filter-chip" data-filter="medium">中风险</button>
+              <button class="filter-chip" data-filter="low">低风险</button>
+            </div>
+          </div>
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>风险</th>
+                  <th>号码</th>
+                  <th>投注额</th>
+                  <th>投注笔数</th>
+                  <th>潜在赔付</th>
+                  <th>风险比</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- 投注管理页面 -->
+      <div id="page-betting" class="page-content">
+        <header class="top-bar">
+          <div class="page-title">
+            <h1>投注管理</h1>
+            <p class="subtitle">快速录入玩家投注 · 选号下注</p>
+          </div>
+        </header>
+
+        <!-- 快速投注区域 -->
+        <section class="betting-quick-section">
+          <!-- 投注信息区 (置顶) -->
+          <div class="bet-input-section">
+            <div class="bet-form-compact">
+              <div class="input-group">
+                <label>玩法选择</label>
+                <select id="quick-bet-type" class="bet-type-select">
+                  <option value="特码直投" selected>特码</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label>玩家ID</label>
+                <input type="text" id="quick-player-name" placeholder="可选">
+              </div>
+              <div class="input-group-combo">
+                <label>投注明细</label>
+                <div class="combo-row">
+                  <div class="bet-count-value" id="bet-count-display">0</div>
+                  <span class="combo-label">注</span>
+                  <span class="combo-separator">×</span>
+                  <input type="number" id="quick-bet-amount" placeholder="每注金额" min="0.01" step="0.01">
+                </div>
+              </div>
+              <div class="input-group amount-preview">
+                <label>投注总额</label>
+                <div class="total-amount" id="total-bet-amount">¥0.00</div>
+              </div>
+              <button class="btn-quick-submit" id="btn-quick-submit">
+                <span class="btn-icon-inner">🎯</span>
+                <span>录入投注</span>
+              </button>
+            </div>
+            <div class="selected-numbers-preview" id="selected-numbers-preview">
+              <span class="preview-placeholder">点击号码或使用筛选按钮选择投注号码...</span>
+            </div>
+          </div>
+
+          <!-- 号码选择网格 -->
+          <div class="number-picker-section">
+            <div class="picker-header">
+              <h3>选择投注号码</h3>
+              <div class="picker-stats">
+                <span class="selected-count">已选 <strong id="selected-count">0</strong> 个</span>
+                <button class="btn-select-all" id="btn-select-all">全选</button>
+                <button class="btn-invert" id="btn-invert">反选</button>
+                <button class="btn-clear-sel" id="btn-clear-selection">清空</button>
+              </div>
+            </div>
+            <!-- 号码输入框 -->
+            <div class="number-input-row">
+              <input type="text" id="number-input" class="number-input" placeholder="输入号码，支持：1-10、龙、大、红波 等，按回车添加">
+              <button class="btn-add-input" id="btn-add-input">添加</button>
+            </div>
+            <div class="number-picker-grid" id="number-picker-grid">
+              <!-- 49个号码球将通过JS生成 -->
+            </div>
+          </div>
+
+          <!-- 号码筛选器 -->
+          <div class="filter-panel">
+            <div class="filter-group">
+              <div class="filter-title">波色</div>
+              <div class="filter-buttons">
+                <button class="filter-btn-bet wave-red" data-filter="red">红波</button>
+                <button class="filter-btn-bet wave-blue" data-filter="blue">蓝波</button>
+                <button class="filter-btn-bet wave-green" data-filter="green">绿波</button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-title">大小</div>
+              <div class="filter-buttons">
+                <button class="filter-btn-bet" data-filter="big">大 (25-49)</button>
+                <button class="filter-btn-bet" data-filter="small">小 (1-24)</button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-title">单双</div>
+              <div class="filter-buttons">
+                <button class="filter-btn-bet" data-filter="odd">单</button>
+                <button class="filter-btn-bet" data-filter="even">双</button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-title">尾数</div>
+              <div class="filter-buttons">
+                <button class="filter-btn-bet" data-filter="tailBig">尾大 (5-9)</button>
+                <button class="filter-btn-bet" data-filter="tailSmall">尾小 (0-4)</button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-title">野家</div>
+              <div class="filter-buttons">
+                <button class="filter-btn-bet" data-filter="wild">野兽</button>
+                <button class="filter-btn-bet" data-filter="domestic">家畜</button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-title">五行</div>
+              <div class="filter-buttons">
+                <button class="filter-btn-bet element-gold" data-filter="gold">金</button>
+                <button class="filter-btn-bet element-wood" data-filter="wood">木</button>
+                <button class="filter-btn-bet element-water" data-filter="water">水</button>
+                <button class="filter-btn-bet element-fire" data-filter="fire">火</button>
+                <button class="filter-btn-bet element-earth" data-filter="earth">土</button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-title">生肖</div>
+              <div class="filter-buttons zodiac-buttons">
+                <button class="filter-btn-bet zodiac" data-zodiac="鼠">鼠</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="牛">牛</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="虎">虎</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="兔">兔</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="龙">龙</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="蛇">蛇</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="马">马</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="羊">羊</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="猴">猴</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="鸡">鸡</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="狗">狗</button>
+                <button class="filter-btn-bet zodiac" data-zodiac="猪">猪</button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-title">头数</div>
+              <div class="filter-buttons">
+                <button class="filter-btn-bet head-btn" data-filter="head0">0头</button>
+                <button class="filter-btn-bet head-btn" data-filter="head1">1头</button>
+                <button class="filter-btn-bet head-btn" data-filter="head2">2头</button>
+                <button class="filter-btn-bet head-btn" data-filter="head3">3头</button>
+                <button class="filter-btn-bet head-btn" data-filter="head4">4头</button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-title">尾数</div>
+              <div class="filter-buttons tail-buttons">
+                <button class="filter-btn-bet tail-btn" data-filter="tail0">0尾</button>
+                <button class="filter-btn-bet tail-btn" data-filter="tail1">1尾</button>
+                <button class="filter-btn-bet tail-btn" data-filter="tail2">2尾</button>
+                <button class="filter-btn-bet tail-btn" data-filter="tail3">3尾</button>
+                <button class="filter-btn-bet tail-btn" data-filter="tail4">4尾</button>
+                <button class="filter-btn-bet tail-btn" data-filter="tail5">5尾</button>
+                <button class="filter-btn-bet tail-btn" data-filter="tail6">6尾</button>
+                <button class="filter-btn-bet tail-btn" data-filter="tail7">7尾</button>
+                <button class="filter-btn-bet tail-btn" data-filter="tail8">8尾</button>
+                <button class="filter-btn-bet tail-btn" data-filter="tail9">9尾</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 投注记录 -->
+        <section class="records-section">
+          <div class="section-header">
+            <h2>本期投注记录</h2>
+            <div class="record-stats">
+              <span>共 <strong id="record-count">0</strong> 单</span>
+              <span>总额 <strong id="record-total">¥0</strong></span>
+              <button class="btn-clear-records" id="btn-clear-all-records">清空全部</button>
+            </div>
+          </div>
+          <div class="records-table-container">
+            <table class="records-table" id="records-table">
+              <thead>
+                <tr>
+                  <th>订单号</th>
+                  <th>玩家</th>
+                  <th>玩法</th>
+                  <th>号码</th>
+                  <th>每注</th>
+                  <th>总额</th>
+                  <th>时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="records-list">
+              </tbody>
+            </table>
+            <div class="empty-records" id="empty-records">
+              <span>暂无投注记录</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- 开奖结算页面 -->
+      <div id="page-settlement" class="page-content">
+        <header class="top-bar">
+          <div class="page-title">
+            <h1>开奖结算</h1>
+            <p class="subtitle">输入开奖号码 · 自动计算盈亏 · 一键结算</p>
+          </div>
+          <div class="top-actions">
+            <button class="btn-icon" id="btn-clear-history" title="清空历史">🗑️</button>
+          </div>
+        </header>
+
+        <!-- 开奖输入区 -->
+        <section class="settle-input-section">
+          <div class="settle-input-card">
+
+            <div class="settle-input-header" id="settle-summary-header">
+              <!-- 内容将由 js 动态生成 -->
+            </div>
+
+
+            <div class="settle-draw-inputs" id="settle-inputs-container">
+              <input type="number" class="settle-draw-input" data-index="0" placeholder="正" min="1" max="49">
+              <input type="number" class="settle-draw-input" data-index="1" placeholder="正" min="1" max="49">
+              <input type="number" class="settle-draw-input" data-index="2" placeholder="正" min="1" max="49">
+              <input type="number" class="settle-draw-input" data-index="3" placeholder="正" min="1" max="49">
+              <input type="number" class="settle-draw-input" data-index="4" placeholder="正" min="1" max="49">
+              <input type="number" class="settle-draw-input" data-index="5" placeholder="正" min="1" max="49">
+              <div class="settle-separator">+</div>
+              <input type="number" class="settle-draw-input special" data-index="6" placeholder="特" min="1" max="49">
+            </div>
+
+            <div class="input-actions">
+              <button class="btn-fetch" id="btn-fetch-draw">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span>获取最新开奖</span>
+              </button>
+
+              <button class="btn-settle" id="btn-settle">
+                <span class="btn-settle-icon">🎯</span>
+                <span>确认开奖</span>
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- 开奖动画遮罩 -->
+        <div class="draw-animation-overlay" id="draw-animation-overlay">
+          <div class="draw-animation-content">
+            <div class="draw-spinning-ball" id="draw-spinning-ball">?</div>
+            <div class="draw-animation-text">开奖中...</div>
+          </div>
+        </div>
+
+        <!-- 结算结果区 -->
+        <div id="settlement-result"></div>
+
+        <!-- 历史开奖记录 -->
+        <section class="settle-history-section" id="settle-history-section">
+          <div class="section-header">
+            <h2>历史开奖记录</h2>
+            <span class="history-count" id="history-count">共 0 期</span>
+          </div>
+          <div class="settle-history-list" id="settle-history-list">
+            <div class="empty-history" id="empty-history">
+              <div class="empty-icon">📜</div>
+              <div class="empty-text">暂无历史记录</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- 号码详情弹窗 -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>号码 <span id="modal-number">-</span> 详细信息</h2>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-stats">
+          <div class="modal-stat-item">
+            <span class="stat-label">总投注额</span>
+            <span class="stat-value" id="modal-amount">¥0</span>
+          </div>
+          <div class="modal-stat-item">
+            <span class="stat-label">投注笔数</span>
+            <span class="stat-value" id="modal-bets">0</span>
+          </div>
+          <div class="modal-stat-item">
+            <span class="stat-label">潜在赔付</span>
+            <span class="stat-value danger" id="modal-payout">¥0</span>
+          </div>
+          <div class="modal-stat-item">
+            <span class="stat-label">风险等级</span>
+            <span class="stat-value" id="modal-risk">-</span>
+          </div>
+        </div>
+        <div class="modal-orders">
+          <h3>相关投注订单</h3>
+          <div class="orders-list" id="orders-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提示框 -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
