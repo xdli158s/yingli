@@ -1479,6 +1479,8 @@ function handleQuickBetSubmit() {
   // 订单号格式: YYYYMMDD-HHMM-序号
   const orderId = `${dateStr}-${timeStr}-${String(bettingRecords.length + 1).padStart(3, '0')}`;
 
+  const sortedNumbers = Array.from(pickerState.selectedNumbers).sort((a, b) => a - b);
+
   const order = {
     orderId: orderId,
     period: currentPeriod,
@@ -1569,11 +1571,7 @@ function initBettingPage() {
     submitBtn.addEventListener('click', handleQuickBetSubmit);
   }
 
-  // 绑定清空全部记录按钮
-  const clearAllBtn = document.getElementById('btn-clear-all-records');
-  if (clearAllBtn) {
-    clearAllBtn.addEventListener('click', clearAllBettingRecords);
-  }
+
 
   // 金额输入框回车提交
   if (amountInput) {
@@ -2358,7 +2356,7 @@ function renderBetTable(bets) {
                 </td>
               </tr>
               <tr class="detail-row" style="display:none; background: #0b1120;">
-                <td colspan="8" style="padding: 0; border-bottom: 1px solid #334155;">
+                <td colspan="9" style="padding: 0; border-bottom: 1px solid #334155;">
                     <div style="padding: 16px 20px; box-shadow: inset 0 0 15px rgba(0,0,0,0.4); display: flex; gap: 24px;">
                        <div style="flex:1;">
                           <div style="font-size:12px; color:#94a3b8; margin-bottom:8px; display:flex; justify-content:space-between;">
@@ -2421,6 +2419,8 @@ function saveToHistory(drawNumbers, results) {
     }))
   };
 
+  // 覆盖式：移除同期旧记录，使用最新数据
+  drawHistory = drawHistory.filter(r => r.period !== currentPeriod);
   drawHistory.unshift(record);
 
   // 保存到localStorage
@@ -2474,7 +2474,7 @@ function renderDrawHistory() {
 
     // 确定盈亏样式
     const profitColor = record.profit > 0 ? '#4ade80' : record.profit < 0 ? '#ef4444' : '#94a3b8';
-    const profitSign = record.profit >= 0 ? '+' : '';
+    const profitStr = record.profit >= 0 ? `+¥${record.profit.toFixed(2)}` : `-¥${Math.abs(record.profit).toFixed(2)}`;
 
     // 生成号码球 (紧凑版，带生肖)
     const ballsHtml = numbers.map((n, idx) => {
@@ -2504,7 +2504,7 @@ function renderDrawHistory() {
           <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">投注</div><div style="font-size:12px; font-weight:bold; color:#cbd5e1;">${record.totalBets}笔</div></div>
           <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">收入</div><div style="font-size:12px; font-weight:bold; color:#cbd5e1;">¥${record.totalBetAmount.toFixed(0)}</div></div>
           <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">赔付</div><div style="font-size:12px; font-weight:bold; color:#f87171;">¥${record.totalPayout.toFixed(0)}</div></div>
-          <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">盈亏</div><div style="font-size:12px; font-weight:bold; color:${profitColor};">${profitSign}¥${Math.abs(record.profit).toFixed(0)}</div></div>
+          <div style="text-align:center;"><div style="font-size:10px; color:#64748b;">盈亏</div><div style="font-size:12px; font-weight:bold; color:${profitColor};">${profitStr}</div></div>
         </div>
       </div>`;
   }).join('');
