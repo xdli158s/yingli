@@ -358,8 +358,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
       } else if (page === 'settlement') {
         loadPeriodData(currentPeriod);
       } else if (page === 'analysis') {
-        updateAnalysisCharts();
-        updateRiskAnalysis();
+        refreshAllAnalysis();
       }
     }, 50);
   });
@@ -666,7 +665,7 @@ function renderCategoryAnalysis(containerId, dataKey, colorMap = {}) {
         <span class="analysis-item-amount">¥${item.amount.toFixed(0)}</span>
       </div>
       <div class="analysis-item-bar">
-        <div class="analysis-item-fill" style="width: ${(item.amount / maxAmount * 100)}%; background: ${item.color};"></div>
+        <div class="analysis-item-fill" style="width: ${item.percentage}%; background: ${item.color};"></div>
       </div>
       <div class="analysis-item-stats">
         <span>占比: ${item.percentage}%</span>
@@ -686,7 +685,7 @@ function renderZodiacAnalysis() {
 }
 
 function renderElementAnalysis() {
-  renderCategoryAnalysis('element-analysis', 'element', { '金': '#cbd5e1', '木': '#10b981', '水': '#3b82f6', '火': '#ef4444', '土': '#f59e0b' });
+  renderCategoryAnalysis('element-analysis', 'element', { '金': '#facc15', '木': '#10b981', '水': '#3b82f6', '火': '#ef4444', '土': '#854d0e' });
 }
 
 // 渲染数据表格
@@ -1954,7 +1953,7 @@ function renderOrdersTable(bets, options = { isSettled: true, allowDelete: false
                      <div style="flex:1;">
                         <div style="font-size:12px; color:#94a3b8; margin-bottom:8px; display:flex; justify-content:space-between;">
                            <span>投注明细 (${numCount}注)</span>
-                           <span>${bet.winNumbers && bet.winNumbers.length > 0 ? `<span style="color:#ef4444;">命中 ${bet.winNumbers.length} 注</span>` : '未中奖'}</span>
+                           <span>${options.isSettled ? (bet.winNumbers && bet.winNumbers.length > 0 ? `<span style="color:#ef4444;">命中 ${bet.winNumbers.length} 注</span>` : '未中奖') : '<span style="color:#f59e0b;">待开奖</span>'}</span>
                         </div>
                         <div style="line-height:2; display: flex; flex-wrap: wrap; align-items: center;">${allNums}</div>
                      </div>
