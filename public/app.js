@@ -216,23 +216,67 @@ const mockData = initNumberStats();
 // 投注记录存储
 let bettingRecords = [];
 
-// 计算当年的第几天
-function getDayOfYear(date) {
-  const start = new Date(date.getFullYear(), 0, 0);
-  const diff = date - start;
+// 初始化当期期号：第DDD期 (001-365/366)
+function calculateCurrentPeriod() {
+  const now = new Date();
+  // 使用北京时间 (UTC+8)
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const beijingTime = new Date(utc + (3600000 * 8));
+
+  const start = new Date(beijingTime.getFullYear(), 0, 0);
+  const diff = beijingTime - start;
   const oneDay = 1000 * 60 * 60 * 24;
-  return Math.floor(diff / oneDay);
+  const dayOfYear = Math.floor(diff / oneDay);
+
+  return `第${String(dayOfYear).padStart(3, '0')}期`;
 }
 
-// 初始化当期期号：YYYY + DDD (当年的第几天，3位数)
-const today = new Date();
-const dayOfYear = String(getDayOfYear(today)).padStart(3, '0');
-let currentPeriod = `${today.getFullYear()}${dayOfYear}`;
+let currentPeriod = calculateCurrentPeriod();
 
-// 立即更新前端显示，防止HTML中硬编码的旧期号显示出来
-setTimeout(() => {
+// 立即更新前端显示
+function updatePeriodDisplay() {
+  currentPeriod = calculateCurrentPeriod();
   const periodEl = document.getElementById('sidebar-period');
-  if (periodEl) periodEl.textContent = currentPeriod;
+  if (periodEl) periodEl.textContent = currentPeriod + ' (当前期)';
+
+  // 同时更新 settlement 页面里的 currentPeriod 显示(如果有引用)和期数选择器
+  updatePeriodSelector();
+}
+
+// 启动定时检查，跨天自动更新期号 (每天00:00更新)
+function scheduleNextPeriodUpdate() {
+  const now = new Date();
+
+  // 计算北京时间 (UTC+8)
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const beijingTime = new Date(utc + (3600000 * 8));
+
+  // 计算下一个午夜
+  const nextMidnight = new Date(beijingTime);
+  nextMidnight.setDate(beijingTime.getDate() + 1);
+  nextMidnight.setHours(0, 0, 0, 100); // 设为 00:00:00.100 防止边界误差
+
+  const delay = nextMidnight - beijingTime;
+
+  console.log(`下一期更新将在 ${Math.floor(delay / 1000 / 60)} 分钟后执行`);
+
+  // 设置定时器
+  setTimeout(() => {
+    updatePeriodDisplay();
+    // 可以在这里添加跨天自动清空数据的逻辑 if needed
+    showToast(`新的一天，自动切换至 ${currentPeriod}`, 'info');
+
+    // 递归调用，安排下一次更新
+    scheduleNextPeriodUpdate();
+  }, delay);
+}
+
+// 启动自动更新调度
+scheduleNextPeriodUpdate();
+
+// 立即执行一次初始化显示
+setTimeout(() => {
+  updatePeriodDisplay();
   updateSettleInfo();
 }, 0);
 
@@ -1318,7 +1362,7 @@ let drawHistory = [];
 
 // 尝试从localStorage加载历史记录
 try {
-  const saved = localStorage.getItem('drawHistory');
+  const saved = localStorage.getItem('lotteryDrawHistory');
   if (saved) drawHistory = JSON.parse(saved);
 } catch (e) { /* ignore */ }
 
@@ -1388,11 +1432,17 @@ async function fetchLatestResult() {
         // 用户需求：如果当前期数还没开奖，不要将旧期数来充当
 
         // 转换API期号格式（如果需要）
-        // 假设 API 返回的 expect 格式为 "2025042"
-        const apiPeriod = String(item.expect);
+        // 假设 API 返回的 format 是 YYYYDDD (如 2025042)
+        // 我们现在的格式是 "第042期"
+        // 需要提取 API 的后三位来对比
+        const apiExpectStr = String(item.expect);
+        const apiDayOfYear = apiExpectStr.slice(-3); // 取后三位 "042"
 
-        if (apiPeriod !== currentPeriod) {
-          showToast(`获取到的数据是第 ${apiPeriod} 期，与当前期号 ${currentPeriod} 不符，可能是旧数据`, 'warning');
+        // 提取当前期号的数字部分 "第042期" -> "042"
+        const currentDayOfYear = currentPeriod.replace(/[^\d]/g, '');
+
+        if (apiDayOfYear !== currentDayOfYear) {
+          showToast(`获取到的数据是第 ${apiDayOfYear} 期，与当前 ${currentPeriod} 不符，可能是旧数据`, 'warning');
           // 根据需求，不填充旧数据
           return;
         }
@@ -1431,21 +1481,19 @@ function fillDrawInputs(numbers) {
 }
 
 
-// 格式化期数显示（日期+期数）
+// 格式化期数显示
 function formatPeriodDisplay(period) {
-  if (!period || period.length < 7) return period;
+  // 已经是 "第XXX期" 格式，直接返回，或者对于历史数据做兼容
+  if (period.startsWith('第')) return period;
 
-  const year = period.substring(0, 4);
-  const dayOfYear = parseInt(period.substring(4, 7));
+  // 兼容旧格式 YYYYDDD
+  if (period.length === 7 && !isNaN(period)) {
+    const year = period.substring(0, 4);
+    const day = period.substring(4, 7);
+    return `${year}年 第${day}期`;
+  }
 
-  // 计算日期
-  const date = new Date(year, 0);
-  date.setDate(dayOfYear);
-
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day} 第${period}期`;
+  return period;
 }
 
 // 更新期数选择器
@@ -2191,7 +2239,7 @@ function saveToHistory(drawNumbers, results) {
 
   // 保存到localStorage
   try {
-    localStorage.setItem('drawHistory', JSON.stringify(drawHistory));
+    localStorage.setItem('lotteryDrawHistory', JSON.stringify(drawHistory));
   } catch (e) { /* ignore */ }
 }
 
@@ -2335,7 +2383,7 @@ function clearDrawHistory() {
 
   drawHistory = [];
   try {
-    localStorage.removeItem('drawHistory');
+    localStorage.removeItem('lotteryDrawHistory');
   } catch (e) { /* ignore */ }
 
   renderDrawHistory();
@@ -2408,116 +2456,4 @@ document.addEventListener('DOMContentLoaded', () => {
   initSettlementPage();
 });
 
-// 初始化模拟历史数据
-function initMockHistoryIfNeeded() {
-  // 按照要求，如果没有足够的数据（模拟10期），则重新生成
-  if (drawHistory.length >= 10) return;
 
-  // 清空现有数据以确保模拟效果的连贯性
-  drawHistory = [];
-
-  const mockPeriods = 10;
-  let currentDate = new Date();
-
-  // 从昨天开始往前推
-  currentDate.setDate(currentDate.getDate() - 1);
-
-  for (let i = 0; i < mockPeriods; i++) {
-    const periodDate = new Date(currentDate);
-    periodDate.setDate(periodDate.getDate() - i);
-
-    // 生成期号 YYYY+DDD
-    const year = periodDate.getFullYear();
-    const start = new Date(year, 0, 0);
-    const diff = periodDate - start;
-    const oneDay = 1000 * 60 * 60 * 24;
-    const dayOf = Math.floor(diff / oneDay);
-    const dayOfYear = String(dayOf).padStart(3, '0');
-    const period = `${year}${dayOfYear}`;
-
-    // 随机开奖号码
-    const drawNumbers = [];
-    while (drawNumbers.length < 7) {
-      const num = Math.floor(Math.random() * 49) + 1;
-      if (!drawNumbers.includes(num)) drawNumbers.push(num);
-    }
-    const specialNumber = drawNumbers[6];
-
-    // 随机生成一些订单
-    const bets = [];
-    const betCount = Math.floor(Math.random() * 20) + 5;
-    let totalBetAmount = 0;
-    let totalPayout = 0;
-
-    for (let j = 0; j < betCount; j++) {
-      const player = `玩家${Math.floor(Math.random() * 900) + 100}`;
-      const amountPerNum = Math.floor(Math.random() * 50) + 10;
-
-      // 随机玩法
-      const betTypeRand = Math.random();
-      let betType = '特码直投';
-      let betNums = [];
-      let payout = 0;
-      let hasWin = false;
-      let winNumbers = [];
-
-      // 简单模拟
-      const numCount = Math.floor(Math.random() * 10) + 1;
-      while (betNums.length < numCount) {
-        const n = Math.floor(Math.random() * 49) + 1;
-        if (!betNums.includes(n)) betNums.push(n);
-      }
-
-      if (betNums.includes(specialNumber)) {
-        hasWin = true;
-        winNumbers.push(specialNumber);
-        payout = amountPerNum * 47;
-      }
-
-      const totalAmount = amountPerNum * betNums.length;
-      totalBetAmount += totalAmount;
-      totalPayout += payout;
-
-      bets.push({
-        orderId: `${period}-${String(j + 1).padStart(3, '0')}`,
-        playerName: player,
-        betType: betType,
-        betNumbers: betNums,
-        betAmountPerNumber: amountPerNum,
-        totalAmount: totalAmount,
-        timestamp: periodDate.toLocaleString('zh-CN'),
-        winNumbers: winNumbers,
-        hasWin: hasWin,
-        payout: payout,
-        odds: 47.0
-      });
-    }
-
-    const record = {
-      id: Date.now() - i * 100000,
-      period: period,
-      drawNumbers: drawNumbers,
-      drawNumber: specialNumber,
-      drawTime: periodDate.toLocaleString('zh-CN'),
-      totalBets: bets.length,
-      totalBetAmount: totalBetAmount,
-      winCount: bets.filter(b => b.hasWin).length,
-      totalPayout: totalPayout,
-      profit: totalBetAmount - totalPayout,
-      bets: bets
-    };
-
-    drawHistory.push(record);
-  }
-
-  // 排序
-  drawHistory.sort((a, b) => b.period - a.period);
-
-  // 保存
-  localStorage.setItem('drawHistory', JSON.stringify(drawHistory));
-}
-
-// 在初始化页面时调用
-if (typeof initMockHistoryIfNeeded === 'function') {
-  initMockHistoryIfNeeded();
-}
