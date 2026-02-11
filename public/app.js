@@ -158,6 +158,13 @@ function getFilterCategory(filterKey) {
   return 'custom';
 }
 
+// 生成格式化订单号 (Period-ID -> 2026042-1)
+function generateOrderId(period, id) {
+  // 提取数字：2026年第042期 -> 2026042
+  const periodNum = period.replace(/\D/g, '');
+  return `${periodNum}-${id}`;
+}
+
 // 显示提示消息
 function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
@@ -270,7 +277,7 @@ const API = {
   }
 };
 
-// 初始化当期期号：第DDD期 (001-365/366)
+// 初始化当期期号：YYYY年第DDD期 (001-365/366)
 function calculateCurrentPeriod() {
   const now = new Date();
   // 使用北京时间 (UTC+8)
@@ -282,7 +289,8 @@ function calculateCurrentPeriod() {
   const oneDay = 1000 * 60 * 60 * 24;
   const dayOfYear = Math.floor(diff / oneDay);
 
-  return `第${String(dayOfYear).padStart(3, '0')}期`;
+  const year = beijingTime.getFullYear();
+  return `${year}年第${String(dayOfYear).padStart(3, '0')}期`;
 }
 
 let currentPeriod = calculateCurrentPeriod();
@@ -291,7 +299,7 @@ let currentPeriod = calculateCurrentPeriod();
 function updatePeriodDisplay() {
   currentPeriod = calculateCurrentPeriod();
   const periodEl = document.getElementById('sidebar-period');
-  if (periodEl) periodEl.textContent = currentPeriod + ' (当前期)';
+  if (periodEl) periodEl.textContent = currentPeriod;
 
   // 同时更新 settlement 页面里的 currentPeriod 显示(如果有引用)和期数选择器
   updatePeriodSelector();
@@ -317,7 +325,14 @@ function scheduleNextPeriodUpdate() {
   // 设置定时器
   setTimeout(() => {
     updatePeriodDisplay();
-    // 可以在这里添加跨天自动清空数据的逻辑 if needed
+
+    // 跨天自动清空数据
+    bettingRecords = [];
+    renderBettingRecords();
+    updateRecordStats();
+    updateMockDataWithBets();
+    refreshAllAnalysis();
+
     showToast(`新的一天，自动切换至 ${currentPeriod}`, 'info');
 
     // 递归调用，安排下一次更新
@@ -346,7 +361,7 @@ scheduleNextPeriodUpdate();
     if (Array.isArray(bets)) {
       bettingRecords = bets.map((b, idx) => ({
         ...b,
-        orderId: b.id ? `ORDER-${b.id}` : `LOCAL-${idx}`,
+        orderId: b.id ? generateOrderId(b.period, b.id) : `LOCAL-${idx}`,
         createTime: b.timestamp ? new Date(b.timestamp).getTime() : Date.now()
       }));
     }
@@ -523,45 +538,6 @@ function renderAnalysisCards() {
     }).join('');
   });
 }
-
-// 开新盘
-document.getElementById('btn-new-period').addEventListener('click', () => {
-  if (bettingRecords.length > 0) {
-    if (!confirm('开新盘将清空当前所有投注记录，确定继续吗？')) {
-      return;
-    }
-  }
-
-  // 生成新盘期号
-  const currentYear = parseInt(currentPeriod.substring(0, 4));
-  const currentDay = parseInt(currentPeriod.substring(4));
-
-  let nextYear = currentYear;
-  let nextDay = currentDay + 1;
-
-  // 简单处理跨年（不严谨，但符合基本逻辑）
-  if (nextDay > 365) {
-    nextYear++;
-    nextDay = 1;
-  }
-
-  currentPeriod = `${nextYear}${String(nextDay).padStart(3, '0')}`;
-
-  // 清空投注记录
-  bettingRecords = [];
-
-  // 更新显示
-  document.getElementById('sidebar-period').textContent = currentPeriod;
-  renderBettingRecords();
-  updateRecordStats();
-  updateMockDataWithBets();
-  refreshAllAnalysis();
-
-  // 更新期数选择器
-  updatePeriodSelector();
-
-  showToast('新盘已开启', 'success');
-});
 
 // 渲染热力图 (10x5布局)
 function renderHeatmap(sortBy = globalSortBy) {
@@ -1345,7 +1321,7 @@ async function handleQuickBetSubmit() {
       // 本地更新
       const order = {
         ...orderPayload,
-        orderId: `ORDER-${res.id}`,
+        orderId: generateOrderId(currentPeriod, res.id),
         timestamp: now.toLocaleString('zh-CN'),
         createTime: Date.now()
       };
@@ -1654,6 +1630,13 @@ function showHistoryList() {
   }
 }
 
+// 结算页面的过滤状态
+const settleFilterState = {
+  orderId: '',
+  playerName: ''
+};
+let currentSettleBets = []; // 当前选定期数的全量订单数据
+
 // 加载指定期数的数据
 function loadPeriodData(period) {
   // 隐藏历史列表
@@ -1663,39 +1646,23 @@ function loadPeriodData(period) {
   const drawRow = document.querySelector('.settle-draw-row');
   const actionRow = document.querySelector('.settle-actions');
 
-  // 如果是当前期，显示当前投注数据
-  if (period === currentPeriod) {
-    // 1. 显示输入区域
-    if (drawRow) drawRow.style.display = ''; // 恢复默认显示 (flex)
-    if (actionRow) actionRow.style.display = '';
+  // 重置过滤器
+  settleFilterState.orderId = '';
+  settleFilterState.playerName = '';
+  document.getElementById('settle-search-order').value = '';
+  document.getElementById('settle-search-player').value = '';
 
-    updateSettleInfo();
-    // 清空开奖输入框
-    document.querySelectorAll('.settle-draw-input').forEach(input => input.value = '');
-
-    // 清空之前的结算结果显示
-    document.getElementById('settlement-result').innerHTML = '';
-
-    // 2. 显示当前期的所有订单 (未结算状态)
-    // 即使未结算，也显示订单列表供查看
-    const pendingResults = {
-      bets: bettingRecords //直接使用当前的投注记录
-    };
-    renderOrdersTabs(pendingResults.bets, false);
-    document.getElementById('settle-orders-section').style.display = 'block';
-
-    return;
-  }
-
-  // 如果是历史期数
-  // 1. 隐藏输入区域 (因为已经开奖了)
-  if (drawRow) drawRow.style.display = 'none';
-  if (actionRow) actionRow.style.display = 'none';
-
-  // 查找历史记录
+  // 查找历史记录 (无论是当前期还是往期，只要结算过就在这里)
   const historyRecord = drawHistory.find(r => r.period === period);
+
   if (historyRecord) {
-    // 显示历史期数的投注信息
+    // 已结算状态
+
+    // 隐藏输入区域
+    if (drawRow) drawRow.style.display = 'none';
+    if (actionRow) actionRow.style.display = 'none';
+
+    // 显示结算摘要 (Total)
     const summaryContainer = document.getElementById('settle-summary-header');
     if (summaryContainer) {
       summaryContainer.innerHTML = `
@@ -1704,10 +1671,7 @@ function loadPeriodData(period) {
       `;
     }
 
-    // 填充开奖号码 (虽然输入框隐藏了，但为了逻辑完整性还是填充一下，或者不需要)
-    // fillDrawInputs(historyRecord.drawNumbers); 
-
-    // 显示结算结果
+    // 显示开奖结果
     const results = {
       totalBets: historyRecord.totalBets,
       totalBetAmount: historyRecord.totalBetAmount,
@@ -1720,10 +1684,96 @@ function loadPeriodData(period) {
 
     renderSettlementResult(historyRecord.drawNumbers, results);
 
-    // 显示订单详情区
-    renderOrdersTabs(results.bets);
+    // 设置当前全量数据并渲染
+    currentSettleBets = results.bets;
+    applySettleFilters();
+
+    document.getElementById('settle-orders-section').style.display = 'block';
+    return;
+  }
+
+  // 如果没有历史记录，且是当前期 (未结算状态)
+  if (period === currentPeriod) {
+    // 显示输入区域
+    if (drawRow) drawRow.style.display = '';
+    if (actionRow) actionRow.style.display = '';
+
+    updateSettleInfo();
+    // 清空开奖输入框
+    document.querySelectorAll('.settle-draw-input').forEach(input => input.value = '');
+
+    // 清空之前的结算结果显示
+    document.getElementById('settlement-result').innerHTML = '';
+
+    // 设置当前全量数据并渲染
+    currentSettleBets = bettingRecords; //直接使用当前的投注记录
+    applySettleFilters(false); // 传入 false 表示未结算
+
+    document.getElementById('settle-orders-section').style.display = 'block';
   }
 }
+
+// 应用过滤器并渲染
+function applySettleFilters(isSettled = true) {
+  const orderId = document.getElementById('settle-search-order').value.trim().toLowerCase();
+  const playerName = document.getElementById('settle-search-player').value.trim().toLowerCase();
+
+  // 执行过滤
+  const filteredBets = currentSettleBets.filter(bet => {
+    const matchOrder = !orderId || (bet.orderId && bet.orderId.toLowerCase().includes(orderId));
+    const matchPlayer = !playerName || (bet.playerName && bet.playerName.toLowerCase().includes(playerName));
+    return matchOrder && matchPlayer;
+  });
+
+  // 更新过滤统计栏
+  const totalBets = filteredBets.length;
+  const totalAmount = filteredBets.reduce((sum, b) => sum + b.totalAmount, 0);
+  const winCount = filteredBets.filter(b => b.hasWin).length;
+  const totalPayout = filteredBets.reduce((sum, b) => sum + (b.hasWin ? b.payout : 0), 0);
+
+  const statsEl = document.getElementById('settle-filter-stats');
+  if (statsEl) {
+    if (orderId || playerName) {
+      // 只有在有搜索条件时才高亮显示筛选结果
+      statsEl.innerHTML = `
+        <span>筛选结果:</span>
+        <span class="filter-stat-val">订单 ${totalBets}</span>
+        <span class="filter-stat-val amount">¥${totalAmount.toFixed(2)}</span>
+        ${isSettled ? `<span class="filter-stat-val" style="color:${winCount > 0 ? '#ef4444' : '#94a3b8'}">中奖 ${winCount}</span>` : ''}
+      `;
+      statsEl.style.display = 'flex';
+    } else {
+      // 默认显示总额预览
+      statsEl.innerHTML = `
+        <span class="filter-stat-val">总订单 ${totalBets}</span>
+        <span class="filter-stat-val amount">¥${totalAmount.toFixed(2)}</span>
+      `;
+    }
+  }
+
+  // 渲染过滤后的列表
+  // 注意：如果 currentSettleBets 是当前期的 bettingRecords，isSettled 应该由外部状态决定
+  // 这我们简单判断，如果是在 historyRecord 分支进来的，isSettled = true (默认)，否则需要传入
+  // 但为了简化，我们复用外部传入的 isSettled。
+  // 注意：loadPeriodData中的调用已经处理了 isSettled 参数
+
+  // 修正：如果调用来自 input event，我们需要知道当前是否已结算
+  // 简单的判断方法：看 settlement-result 是否有内容，或者看 currentSettleBets 是否等于 bettingRecords
+  // 为了准确，我们在 bind events 时不传参数，让函数自己推断? 或者 simply pass data attribute?
+  // 实际上可以通过检测 currentSettleBets === bettingRecords 来判断是否是"当前未结算数据"
+  // (前提是 bettingRecords 没被修改引用)
+  const isPending = (currentSettleBets === bettingRecords) && (currentPeriod === document.getElementById('period-selector').value);
+
+  // 强制覆盖 isSettled 逻辑: 如果我们正在查看历史记录，那肯定是 settled。
+  // 如果是当前期且没结算，那就是 pending。
+  const actualIsSettled = !isPending;
+
+  renderOrdersTabs(filteredBets, actualIsSettled);
+}
+
+// 绑定搜索输入事件
+document.getElementById('settle-search-order').addEventListener('input', () => applySettleFilters());
+document.getElementById('settle-search-player').addEventListener('input', () => applySettleFilters());
 
 // 渲染订单详情标签页
 function renderOrdersTabs(bets, isSettled = true) {

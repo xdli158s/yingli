@@ -34,9 +34,7 @@
 
             <div class="period-card">
                 <div class="period-label">当前期数</div>
-                <div class="period-number" id="sidebar-period">第043期</div>
-                <div class="period-status status-open" id="sidebar-status">🟢 接受投注中</div>
-                <button class="btn-new-period" id="btn-new-period">开新盘</button>
+                <div class="period-number" id="sidebar-period">2026年第043期</div>
             </div>
         </aside>
 
@@ -457,6 +455,17 @@
 
                 <!-- 订单详情区（当选择具体期数时显示） -->
                 <section class="settle-orders-section" id="settle-orders-section" style="display: none;">
+                    <!-- 搜索过滤栏 -->
+                    <div class="settle-filter-bar">
+                        <div class="filter-inputs">
+                            <input type="text" id="settle-search-order" placeholder="搜索订单号...">
+                            <input type="text" id="settle-search-player" placeholder="搜索玩家...">
+                        </div>
+                        <div class="filter-stats" id="settle-filter-stats">
+                            <!-- JS 动态更新过滤后的统计 -->
+                        </div>
+                    </div>
+
                     <div class="settle-orders-tabs">
                         <button class="settle-tab-btn active" data-tab="all">所有订单 (<span
                                 id="tab-count-all">0</span>)</button>

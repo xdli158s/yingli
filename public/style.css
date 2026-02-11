@@ -128,7 +128,7 @@ body {
 }
 
 .period-number {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-main);
   margin-bottom: 0;
@@ -136,6 +136,7 @@ body {
   padding: 6px 12px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
+  white-space: nowrap;
 }
 
 .period-status {
@@ -2335,6 +2336,69 @@ body {
   padding: 0;
   margin-bottom: 20px;
   overflow: hidden;
+}
+
+/* 搜索过滤栏 */
+.settle-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-dark);
+  padding: 16px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.filter-inputs {
+  display: flex;
+  gap: 12px;
+}
+
+.filter-inputs input {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: 6px;
+  flex: 1;
+  font-size: 13px;
+}
+
+.filter-inputs input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.filter-stats {
+  font-size: 12px;
+  color: var(--text-dim);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.filter-stat-val {
+  font-weight: 700;
+  color: var(--text-main);
+  margin-left: 4px;
+}
+
+.filter-stat-val.amount {
+  color: var(--warning);
+}
+
+@media (min-width: 768px) {
+  .settle-filter-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .filter-inputs {
+    flex: 1;
+    max-width: 360px;
+  }
 }
 
 .settle-orders-tabs {
