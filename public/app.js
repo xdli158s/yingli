@@ -1702,14 +1702,10 @@ const settleFilterState = {
 };
 let currentSettleBets = []; // 当前选定期数的全量订单数据
 
-// 加载指定期数的数据
+// 加载指定期数的数据（统一逻辑）
 function loadPeriodData(period) {
   // 隐藏历史列表
   document.getElementById('settle-history-section').style.display = 'none';
-
-  // 获取输入区域相关元素
-  const drawRow = document.querySelector('.settle-draw-row');
-  const actionRow = document.querySelector('.settle-actions');
 
   // 重置过滤器
   settleFilterState.orderId = '';
@@ -1718,58 +1714,54 @@ function loadPeriodData(period) {
   document.getElementById('settle-search-player').value = '';
   updateFilterStatus();
 
-  // 查找历史记录 (无论是当前期还是往期，只要结算过就在这里)
+  // 查找历史记录
   const historyRecord = drawHistory.find(r => r.period === period);
+  
+  // 判断是否已开奖
+  const isSettled = !!historyRecord;
+  
+  // 判断是否是当前期
+  const isCurrentPeriod = (period === currentPeriod);
 
-  if (historyRecord) {
-    // 已结算状态
-
-    // 隐藏输入区域
-    if (drawRow) drawRow.style.display = 'none';
-    if (actionRow) actionRow.style.display = 'none';
-
-    // 更新开奖号码显示
-    updateDrawNumberDisplay(historyRecord.drawNumbers);
-    updateFetchButtonVisibility();
-
-    // 显示开奖结果
-    const results = {
-      totalBets: historyRecord.totalBets,
-      totalBetAmount: historyRecord.totalBetAmount,
-      winCount: historyRecord.winCount,
-      loseCount: historyRecord.totalBets - historyRecord.winCount,
-      totalPayout: historyRecord.totalPayout,
-      profit: historyRecord.profit,
-      bets: historyRecord.bets || []
-    };
-
-    // 设置当前全量数据并渲染
-    currentSettleBets = results.bets;
-    applySettleFilters(true); // 已结算
-
-    document.getElementById('settle-orders-section').style.display = 'block';
-    return;
+  // 获取数据
+  let betsData = [];
+  let drawNumbers = null;
+  
+  if (isSettled) {
+    // 已开奖：使用历史数据
+    betsData = historyRecord.bets || [];
+    drawNumbers = historyRecord.drawNumbers;
+  } else if (isCurrentPeriod) {
+    // 当前期未开奖：使用当前投注记录
+    betsData = bettingRecords;
+    drawNumbers = null;
   }
 
-  // 如果没有历史记录，且是当前期 (未结算状态)
-  if (period === currentPeriod) {
-    // 显示输入区域
+  // 更新开奖号码显示
+  updateDrawNumberDisplay(drawNumbers);
+  updateFetchButtonVisibility();
+
+  // 显示/隐藏手动输入区（仅当前期未开奖时显示）
+  const drawRow = document.querySelector('.settle-draw-row');
+  const actionRow = document.querySelector('.settle-actions');
+  if (isCurrentPeriod && !isSettled) {
     if (drawRow) drawRow.style.display = '';
     if (actionRow) actionRow.style.display = '';
-
-    // 更新开奖号码显示为待开奖状态
-    updateDrawNumberDisplay();
-    updateFetchButtonVisibility();
-
-    // 清空开奖输入框
+    // 清空输入框
     document.querySelectorAll('.settle-draw-input').forEach(input => input.value = '');
-
-    // 设置当前全量数据并渲染
-    currentSettleBets = bettingRecords;
-    applySettleFilters(false); // 未结算
-
-    document.getElementById('settle-orders-section').style.display = 'block';
+  } else {
+    if (drawRow) drawRow.style.display = 'none';
+    if (actionRow) actionRow.style.display = 'none';
   }
+
+  // 设置当前全量数据
+  currentSettleBets = betsData;
+  
+  // 渲染订单列表（统一使用相同的模板）
+  applySettleFilters(isSettled);
+
+  // 显示订单区域
+  document.getElementById('settle-orders-section').style.display = 'block';
 }
 
 // 应用过滤器并渲染
@@ -1825,19 +1817,30 @@ function updateFilterStatus(orderId = '', playerName = '', filteredCount = 0, to
 function updateSummarySection(bets, isSettled = true) {
   const totalBets = bets.length;
   const totalAmount = bets.reduce((sum, b) => sum + b.totalAmount, 0);
-  const winCount = isSettled ? bets.filter(b => b.hasWin).length : 0;
-  const totalPayout = isSettled ? bets.reduce((sum, b) => sum + (b.hasWin ? b.payout : 0), 0) : 0;
-  const profit = totalAmount - totalPayout;
-
+  
+  // 更新笔数和投注额（始终显示）
   document.getElementById('summary-count').textContent = totalBets;
   document.getElementById('summary-amount').textContent = `¥${totalAmount.toFixed(2)}`;
-  document.getElementById('summary-win').textContent = winCount;
   
+  // 更新中奖数和盈亏（未开奖时显示 ---）
+  const winEl = document.getElementById('summary-win');
   const profitEl = document.getElementById('summary-profit');
-  profitEl.textContent = isSettled ? `${profit >= 0 ? '+' : ''}¥${profit.toFixed(2)}` : '-';
-  profitEl.className = 'settle-summary-value';
+  
   if (isSettled) {
+    // 已开奖：显示实际数据
+    const winCount = bets.filter(b => b.hasWin).length;
+    const totalPayout = bets.reduce((sum, b) => sum + (b.hasWin ? b.payout : 0), 0);
+    const profit = totalAmount - totalPayout;
+    
+    winEl.textContent = winCount;
+    profitEl.textContent = `${profit >= 0 ? '+' : ''}¥${profit.toFixed(2)}`;
+    profitEl.className = 'settle-summary-value';
     profitEl.classList.add(profit >= 0 ? 'profit' : 'loss');
+  } else {
+    // 未开奖：显示 ---
+    winEl.textContent = '---';
+    profitEl.textContent = '---';
+    profitEl.className = 'settle-summary-value';
   }
 }
 
@@ -1845,29 +1848,37 @@ function updateSummarySection(bets, isSettled = true) {
 document.getElementById('settle-search-order').addEventListener('input', () => applySettleFilters());
 document.getElementById('settle-search-player').addEventListener('input', () => applySettleFilters());
 
-// 渲染订单详情标签页
+// 渲染订单详情标签页（统一逻辑）
 function renderOrdersTabs(bets, isSettled = true) {
   const ordersSection = document.getElementById('settle-orders-section');
   if (!ordersSection) return;
 
   ordersSection.style.display = 'block';
 
-  // 如果未结算，中奖/未中奖分类可能不准确，主要看"全部"
+  // 分类订单
   const winBets = isSettled ? bets.filter(b => b.hasWin) : [];
   const loseBets = isSettled ? bets.filter(b => !b.hasWin) : [];
 
   // 更新标签计数
   document.getElementById('tab-count-all').textContent = bets.length;
-  // 未结算时，中奖/未中奖数显示为 0 或 -
-  document.getElementById('tab-count-win').textContent = isSettled ? winBets.length : 0;
-  document.getElementById('tab-count-lose').textContent = isSettled ? loseBets.length : 0;
+  document.getElementById('tab-count-win').textContent = isSettled ? winBets.length : '---';
+  document.getElementById('tab-count-lose').textContent = isSettled ? loseBets.length : '---';
 
   // 渲染各个标签页内容
   document.getElementById('settle-orders-all').innerHTML = renderOrdersTable(bets, { isSettled: isSettled });
-  document.getElementById('settle-orders-win').innerHTML = renderOrdersTable(winBets, { isSettled: isSettled });
-  document.getElementById('settle-orders-lose').innerHTML = renderOrdersTable(loseBets, { isSettled: isSettled });
+  document.getElementById('settle-orders-win').innerHTML = isSettled 
+    ? renderOrdersTable(winBets, { isSettled: isSettled })
+    : '<div style="text-align:center; padding: 60px 20px; color: #64748b; font-size: 14px;">待开奖</div>';
+  document.getElementById('settle-orders-lose').innerHTML = isSettled 
+    ? renderOrdersTable(loseBets, { isSettled: isSettled })
+    : '<div style="text-align:center; padding: 60px 20px; color: #64748b; font-size: 14px;">待开奖</div>';
 
-  // 绑定标签切换事件
+  // 绑定标签切换事件（只绑定一次）
+  document.querySelectorAll('.settle-tab-btn').forEach(btn => {
+    // 移除旧的事件监听器
+    btn.replaceWith(btn.cloneNode(true));
+  });
+  
   document.querySelectorAll('.settle-tab-btn').forEach(btn => {
     btn.onclick = function () {
       const tab = this.dataset.tab;
@@ -1914,12 +1925,12 @@ function renderOrdersTable(bets, options = { isSettled: true, allowDelete: false
       profitClass = houseProfit >= 0 ? 'text-green' : 'text-red';
       profitStr = houseProfit >= 0 ? `+¥${houseProfit.toFixed(2)}` : `-¥${Math.abs(houseProfit).toFixed(2)}`;
 
-      resultAmount = bet.hasWin ? `¥${bet.payout.toFixed(2)}` : `0`;
+      resultAmount = bet.hasWin ? `¥${bet.payout.toFixed(2)}` : `¥0.00`;
       resultClass = bet.hasWin ? 'text-red' : '';
     } else {
-      profitStr = '-';
+      profitStr = '---';
       profitClass = '';
-      resultAmount = '-';
+      resultAmount = '---';
       resultClass = '';
     }
 

@@ -429,8 +429,8 @@
                             </div>
                         </div>
 
-                        <!-- 手动输入开奖号码区（仅在未开奖时显示） -->
-                        <div class="settle-draw-row" id="settle-draw-row">
+                        <!-- 手动输入开奖号码区（仅在当前期未开奖时显示） -->
+                        <div class="settle-draw-row" id="settle-draw-row" style="display: none;">
                             <div class="settle-draw-label">正码</div>
                             <div class="settle-draw-inputs" id="settle-inputs-container">
                                 <input type="number" class="settle-draw-input" data-index="0" placeholder="码" min="1"
@@ -451,13 +451,13 @@
                                 min="1" max="49">
                         </div>
 
-                        <div class="settle-actions" id="settle-actions">
+                        <div class="settle-actions" id="settle-actions" style="display: none;">
                             <button class="btn-settle" id="btn-settle">确认开奖结果</button>
                         </div>
                     </div>
                 </section>
 
-                <!-- 订单详情区（当选择具体期数时显示） -->
+                <!-- 订单详情区（统一布局） -->
                 <section class="settle-orders-section" id="settle-orders-section" style="display: none;">
                     <!-- 搜索过滤栏 - 置顶 -->
                     <div class="settle-filter-bar">
@@ -484,11 +484,11 @@
                             </div>
                             <div class="settle-summary-card">
                                 <div class="settle-summary-label">中奖</div>
-                                <div class="settle-summary-value win-count" id="summary-win">0</div>
+                                <div class="settle-summary-value win-count" id="summary-win">---</div>
                             </div>
                             <div class="settle-summary-card">
                                 <div class="settle-summary-label">盈亏</div>
-                                <div class="settle-summary-value" id="summary-profit">¥0.00</div>
+                                <div class="settle-summary-value" id="summary-profit">---</div>
                             </div>
                         </div>
                     </div>
