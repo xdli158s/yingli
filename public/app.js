@@ -216,6 +216,58 @@ const mockData = initNumberStats();
 // 投注记录存储
 let bettingRecords = [];
 
+// API Client Helper
+const API = {
+  async getBets(period) {
+    try {
+      const res = await fetch(`/api/bets${period ? '?period=' + period : ''}`);
+      if (!res.ok) throw new Error('Failed to fetch bets');
+      return await res.json();
+    } catch (e) {
+      console.error(e);
+      showToast('加载投注记录失败', 'error');
+      return [];
+    }
+  },
+  async createBet(bet) {
+    try {
+      const res = await fetch('/api/bets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bet)
+      });
+      if (!res.ok) throw new Error('Failed to create bet');
+      return await res.json();
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  },
+  async getHistory() {
+    try {
+      const res = await fetch('/api/history');
+      if (!res.ok) throw new Error('Failed to fetch history');
+      return await res.json();
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  },
+  async settle(data) {
+    try {
+      const res = await fetch('/api/settle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to settle');
+      return await res.json();
+    } catch (e) {
+      throw e;
+    }
+  }
+};
+
 // 初始化当期期号：第DDD期 (001-365/366)
 function calculateCurrentPeriod() {
   const now = new Date();
@@ -274,11 +326,37 @@ function scheduleNextPeriodUpdate() {
 // 启动自动更新调度
 scheduleNextPeriodUpdate();
 
-// 立即执行一次初始化显示
-setTimeout(() => {
+// 初始化数据
+(async function initApp() {
   updatePeriodDisplay();
+
+  // 1. Load History
+  try {
+    const history = await API.getHistory();
+    if (Array.isArray(history)) {
+      drawHistory = history;
+    }
+  } catch (e) { console.error('History init error', e); }
+
+  // 2. Load Current Bets
+  try {
+    const bets = await API.getBets(currentPeriod);
+    if (Array.isArray(bets)) {
+      bettingRecords = bets.map((b, idx) => ({
+        ...b,
+        orderId: b.id ? `ORDER-${b.id}` : `LOCAL-${idx}`,
+        createTime: b.timestamp ? new Date(b.timestamp).getTime() : Date.now()
+      }));
+    }
+  } catch (e) { console.error('Bets init error', e); }
+
+  updateRecordStats();
+  updateMockDataWithBets();
+  refreshAllAnalysis();
+
   updateSettleInfo();
-}, 0);
+  renderDrawHistory();
+})();
 
 
 // 排序状态（热力图和图表统一使用）
@@ -1225,8 +1303,7 @@ function parseNumberInput(input) {
   return Array.from(numbers).sort((a, b) => a - b);
 }
 
-// 快速录入投注 - 以订单为单位
-function handleQuickBetSubmit() {
+async function handleQuickBetSubmit() {
   const playerName = document.getElementById('quick-player-name')?.value ||
     `玩家${Math.floor(Math.random() * 1000)}`;
   const betAmount = parseFloat(document.getElementById('quick-bet-amount')?.value);
@@ -1243,40 +1320,55 @@ function handleQuickBetSubmit() {
   }
 
   const now = new Date();
-  const dateStr = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0');
-  const timeStr = now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0');
-  // 订单号格式: YYYYMMDD-HHMM-序号
-  const orderId = `${dateStr}-${timeStr}-${String(bettingRecords.length + 1).padStart(3, '0')}`;
-
   const sortedNumbers = Array.from(pickerState.selectedNumbers).sort((a, b) => a - b);
+  const totalAmount = betAmount * sortedNumbers.length;
 
-  const order = {
-    orderId: orderId,
+  // 构造提交对象
+  const orderPayload = {
     period: currentPeriod,
     playerName: playerName,
-    betType: betType, // 确保这个字段被保存
+    betType: betType,
     betNumbers: sortedNumbers,
     betAmountPerNumber: betAmount,
-    totalAmount: betAmount * sortedNumbers.length,
-    timestamp: now.toLocaleString('zh-CN'),
-    createTime: Date.now()
+    totalAmount: totalAmount
   };
 
-  bettingRecords.push(order);
+  // 提交到服务器
+  const submitBtn = document.getElementById('btn-quick-submit');
+  if (submitBtn) submitBtn.disabled = true;
 
-  // 更新显示
-  renderBettingRecords();
-  updateRecordStats();
-  updateMockDataWithBets();
-  refreshAllAnalysis();
+  try {
+    const res = await API.createBet(orderPayload);
+    if (res.success) {
+      // 本地更新
+      const order = {
+        ...orderPayload,
+        orderId: `ORDER-${res.id}`,
+        timestamp: now.toLocaleString('zh-CN'),
+        createTime: Date.now()
+      };
 
-  // 显示成功提示
-  showToast(`成功录入 ${sortedNumbers.length} 注投注，共 ¥${order.totalAmount.toFixed(2)}`, 'success');
+      bettingRecords.push(order);
 
-  // 清空选择和输入
-  clearPickerSelection();
-  const amountInput = document.getElementById('quick-bet-amount');
-  if (amountInput) amountInput.value = '';
+      // 更新显示
+      renderBettingRecords();
+      updateRecordStats();
+      updateMockDataWithBets();
+      refreshAllAnalysis();
+
+      // 显示成功提示
+      showToast(`成功录入 ${sortedNumbers.length} 注投注，共 ¥${order.totalAmount.toFixed(2)}`, 'success');
+
+      // 清空选择和输入
+      clearPickerSelection();
+      const amountInput = document.getElementById('quick-bet-amount');
+      if (amountInput) amountInput.value = '';
+    }
+  } catch (e) {
+    showToast('投注提交失败: ' + e.message, 'error');
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 }
 
 // 清空所有投注记录
@@ -1360,11 +1452,11 @@ document.addEventListener('DOMContentLoaded', initBettingPage);
 // 历史开奖记录
 let drawHistory = [];
 
-// 尝试从localStorage加载历史记录
-try {
-  const saved = localStorage.getItem('lotteryDrawHistory');
-  if (saved) drawHistory = JSON.parse(saved);
-} catch (e) { /* ignore */ }
+// 尝试从localStorage加载历史记录 (已废弃，改为API加载)
+// try {
+//   const saved = localStorage.getItem('lotteryDrawHistory');
+//   if (saved) drawHistory = JSON.parse(saved);
+// } catch (e) { /* ignore */ }
 
 // 获取号码所有属性标签
 function getNumberAttributes(num) {
@@ -2200,47 +2292,44 @@ function renderBetTable(bets) {
 // 保存到历史记录
 // 保存到历史记录
 // 保存到历史记录
-function saveToHistory(drawNumbers, results) {
+async function saveToHistory(drawNumbers, results) {
   // 兼容单一号码
   if (typeof drawNumbers === 'number') {
     drawNumbers = [0, 0, 0, 0, 0, 0, drawNumbers];
   }
 
   const record = {
-    id: Date.now(),
     period: currentPeriod,
-    drawNumbers: drawNumbers, // 保存数组
-    drawNumber: drawNumbers[6], // 兼容旧字段
-    drawTime: new Date().toLocaleString('zh-CN'),
+    drawNumbers: drawNumbers,
+    specialNumber: drawNumbers[6],
     totalBets: results.totalBets,
     totalBetAmount: results.totalBetAmount,
     winCount: results.winCount,
     totalPayout: results.totalPayout,
-    profit: results.profit,
-    // 保存详细订单信息，以便后续查看
-    bets: results.bets.map(b => ({
-      orderId: b.orderId,
-      playerName: b.playerName,
-      betType: b.betType,
-      betNumbers: b.betNumbers,
-      betAmountPerNumber: b.betAmountPerNumber,
-      totalAmount: b.totalAmount,
-      timestamp: b.timestamp,
-      winNumbers: b.winNumbers,
-      hasWin: b.hasWin,
-      payout: b.payout,
-      odds: b.odds || 47.0 // 保存赔率
-    }))
+    profit: results.profit
   };
 
-  // 覆盖式：移除同期旧记录，使用最新数据
-  drawHistory = drawHistory.filter(r => r.period !== currentPeriod);
-  drawHistory.unshift(record);
-
-  // 保存到localStorage
+  // 提交API结算
   try {
-    localStorage.setItem('lotteryDrawHistory', JSON.stringify(drawHistory));
-  } catch (e) { /* ignore */ }
+    await API.settle(record);
+
+    // 更新本地历史 (添加时间戳等显示字段)
+    const displayRecord = {
+      ...record,
+      drawTime: new Date().toLocaleString('zh-CN'),
+      bets: results.bets // 保留本地详细订单用于展示
+    };
+
+    // 覆盖式：移除同期旧记录，使用最新数据
+    drawHistory = drawHistory.filter(r => r.period !== currentPeriod);
+    drawHistory.unshift(displayRecord);
+
+    // 不再使用 localStorage
+    // try { localStorage.setItem('lotteryDrawHistory', JSON.stringify(drawHistory)); } catch (e) { }
+
+  } catch (e) {
+    showToast('结算数据上传失败: ' + e.message, 'error');
+  }
 }
 
 // 渲染历史开奖记录

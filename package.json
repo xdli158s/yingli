@@ -3,15 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev public --binding DB=lottery_db",
-    "deploy": "wrangler pages deploy public",
-    "db:create": "wrangler d1 create lottery_db",
-    "db:migrate": "wrangler d1 migrations apply lottery_db --local",
-    "db:migrate:prod": "wrangler d1 migrations apply lottery_db"
+    "dev": "wrangler pages dev public"
   },
-  "dependencies": {
-    "hono": "^4.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "wrangler": "^3.0.0"
   }

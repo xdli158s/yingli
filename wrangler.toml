@@ -1,7 +1,5 @@
 name = "lottery-betting-system"
-compatibility_date = "2024-01-01"
+compatibility_date = "2026-01-01"
 
-[[d1_databases]]
-binding = "DB"
-database_name = "lottery_db"
-database_id = "your-database-id"
+# Database bindings and other sensitive configs are skipped for security.
+# Please bind your D1 database (Variable name: DB) via the Cloudflare Pages Dashboard.
