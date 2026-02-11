@@ -215,6 +215,8 @@ const mockData = initNumberStats();
 
 // 投注记录存储
 let bettingRecords = [];
+let drawHistory = [];
+
 
 // API Client Helper
 const API = {
@@ -1450,7 +1452,7 @@ document.addEventListener('DOMContentLoaded', initBettingPage);
 // ========== 开奖结算系统 ==========
 
 // 历史开奖记录
-let drawHistory = [];
+
 
 // 尝试从localStorage加载历史记录 (已废弃，改为API加载)
 // try {
