@@ -2559,20 +2559,23 @@ body {
 }
 
 /* 开奖号码显示区 */
-.draw-number-display {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+.draw-number-section {
   background: var(--bg-dark);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  min-width: 200px;
-  flex: 1;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.draw-number-display-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 .draw-status-text {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -2589,6 +2592,130 @@ body {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+.draw-number-balls-large {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.draw-large-ball {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.draw-large-ball-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: white;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.draw-large-ball-circle.ball-red {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.draw-large-ball-circle.ball-blue {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.draw-large-ball-circle.ball-green {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.draw-large-ball-circle.special {
+  width: 100px;
+  height: 100px;
+  font-size: 40px;
+  border: 3px solid #f59e0b;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.draw-large-ball-circle.special::before {
+  content: '特';
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: #f59e0b;
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.draw-large-ball-zodiac {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.draw-number-attrs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.draw-attr-tag {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.draw-attr-tag.tag-red {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.draw-attr-tag.tag-blue {
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.draw-attr-tag.tag-green {
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.draw-attr-label {
+  color: var(--text-dim);
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+/* 旧的小号显示样式（保留兼容） */
+.draw-number-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  min-width: 200px;
+  flex: 1;
 }
 
 .draw-number-balls {
@@ -2784,5 +2911,38 @@ body {
 
   .settle-summary-section .settle-summary-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .draw-number-section {
+    padding: 16px;
+  }
+
+  .draw-number-balls-large {
+    gap: 8px;
+  }
+
+  .draw-large-ball-circle {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+
+  .draw-large-ball-circle.special {
+    width: 75px;
+    height: 75px;
+    font-size: 32px;
+  }
+
+  .draw-large-ball-zodiac {
+    font-size: 14px;
+  }
+
+  .draw-number-attrs {
+    gap: 6px;
+  }
+
+  .draw-attr-tag {
+    padding: 4px 8px;
+    font-size: 11px;
   }
 }

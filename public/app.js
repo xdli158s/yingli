@@ -1561,14 +1561,35 @@ function updateDrawNumberDisplay(numbers = null) {
       displayEl.innerHTML = '<span class="draw-status-text pending">待开奖</span>';
     }
   } else {
-    // 显示开奖号码
+    // 显示大号开奖号码
+    const specialNumber = numbers[6];
+    const attrs = getNumberAttributes(specialNumber);
+    
     const ballsHtml = numbers.map((num, idx) => {
       const waveColor = getNumberWaveColor(num);
+      const zodiac = getZodiacForNumber(num);
       const isSpecial = idx === 6;
-      return `<div class="draw-mini-ball ball-${waveColor} ${isSpecial ? 'special' : ''}">${String(num).padStart(2, '0')}</div>`;
+      return `
+        <div class="draw-large-ball">
+          <div class="draw-large-ball-circle ball-${waveColor} ${isSpecial ? 'special' : ''}">
+            ${String(num).padStart(2, '0')}
+          </div>
+          <div class="draw-large-ball-zodiac">${zodiac}</div>
+        </div>
+      `;
     }).join('');
     
-    displayEl.innerHTML = `<div class="draw-number-balls">${ballsHtml}</div>`;
+    const attrsHtml = attrs.map(attr => 
+      `<span class="draw-attr-tag ${attr.class}">${attr.text}</span>`
+    ).join('');
+    
+    displayEl.innerHTML = `
+      <div class="draw-number-balls-large">${ballsHtml}</div>
+      <div class="draw-number-attrs">
+        <span class="draw-attr-label">特码:</span>
+        ${attrsHtml}
+      </div>
+    `;
   }
 }
 
@@ -1722,11 +1743,9 @@ function loadPeriodData(period) {
       bets: historyRecord.bets || []
     };
 
-    renderSettlementResult(historyRecord.drawNumbers, results);
-
     // 设置当前全量数据并渲染
     currentSettleBets = results.bets;
-    applySettleFilters();
+    applySettleFilters(true); // 已结算
 
     document.getElementById('settle-orders-section').style.display = 'block';
     return;
@@ -1745,19 +1764,16 @@ function loadPeriodData(period) {
     // 清空开奖输入框
     document.querySelectorAll('.settle-draw-input').forEach(input => input.value = '');
 
-    // 清空之前的结算结果显示
-    document.getElementById('settlement-result').innerHTML = '';
-
     // 设置当前全量数据并渲染
     currentSettleBets = bettingRecords;
-    applySettleFilters(false); // 传入 false 表示未结算
+    applySettleFilters(false); // 未结算
 
     document.getElementById('settle-orders-section').style.display = 'block';
   }
 }
 
 // 应用过滤器并渲染
-function applySettleFilters(isSettled = true) {
+function applySettleFilters(isSettled = null) {
   const orderId = document.getElementById('settle-search-order').value.trim().toLowerCase();
   const playerName = document.getElementById('settle-search-player').value.trim().toLowerCase();
 
@@ -1768,18 +1784,20 @@ function applySettleFilters(isSettled = true) {
     return matchOrder && matchPlayer;
   });
 
+  // 判断当前是否已结算（如果没有传入 isSettled 参数，则自动判断）
+  if (isSettled === null) {
+    const isPending = (currentSettleBets === bettingRecords) && (currentPeriod === document.getElementById('period-selector').value);
+    isSettled = !isPending;
+  }
+
   // 更新过滤状态提示
   updateFilterStatus(orderId, playerName, filteredBets.length, currentSettleBets.length);
 
   // 更新投注概况（根据过滤结果）
   updateSummarySection(filteredBets, isSettled);
 
-  // 判断当前是否已结算
-  const isPending = (currentSettleBets === bettingRecords) && (currentPeriod === document.getElementById('period-selector').value);
-  const actualIsSettled = !isPending;
-
   // 渲染订单列表
-  renderOrdersTabs(filteredBets, actualIsSettled);
+  renderOrdersTabs(filteredBets, isSettled);
 }
 
 // 更新过滤状态提示
@@ -2016,7 +2034,7 @@ function performSettlement() {
   // 显示开奖动画
   showDrawAnimation(specialNumber, () => {
     // 计算结算结果 (使用特码)
-    const results = calculateSettlement(specialNumber);
+    const results = calculateSettlementFixed(specialNumber);
 
     // 保存到历史 (保存所有号码)
     saveToHistory(drawNumbers, results);
@@ -2025,13 +2043,10 @@ function performSettlement() {
     updateDrawNumberDisplay(drawNumbers);
     updateFetchButtonVisibility();
 
-    // 渲染结算结果 (传入所有号码)
-    renderSettlementResult(drawNumbers, results);
-
     // 设置当前全量数据
     currentSettleBets = results.bets;
     
-    // 渲染订单详情标签页
+    // 渲染订单详情标签页（已结算状态）
     applySettleFilters(true);
 
     // 更新历史记录展示
@@ -2040,8 +2055,6 @@ function performSettlement() {
     // 更新期数选择器
     updatePeriodSelector();
 
-    // 清空当前投注记录，准备下一期（用户需求：结算后通常需要手动清空或者自动进入下期）
-    // 这里保持当前状态，但应该有一个视觉反馈
     showToast(`开奖结算完成！特码：${specialNumber}`, 'success');
   });
 }
