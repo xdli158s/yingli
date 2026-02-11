@@ -194,123 +194,24 @@ const pickerState = {
   customNumbers: new Set()  // 手动输入的号码
 };
 
-// 根据号码和玩法类型计算分配金额
-function calculateAllocatedAmount(number, betType, betValue, orderAmount) {
-  // 特码直投：全额分配到指定号码
-  if (betType === '特码直投') {
-    return orderAmount;
-  }
 
-  // 大小
-  if (betType === '大小') {
-    const targetNumbers = betValue === '大' ? numberData.size['大'] : numberData.size['小'];
-    if (targetNumbers.includes(number)) {
-      return orderAmount / targetNumbers.length;
-    }
-    return 0;
-  }
-
-  // 单双
-  if (betType === '单双') {
-    const targetNumbers = betValue === '单' ? numberData.parity['单'] : numberData.parity['双'];
-    if (targetNumbers.includes(number)) {
-      return orderAmount / targetNumbers.length;
-    }
-    return 0;
-  }
-
-  // 尾大尾小
-  if (betType === '尾大尾小') {
-    const targetNumbers = betValue === '尾大' ? numberData.tailSize['尾大'] : numberData.tailSize['尾小'];
-    if (targetNumbers.includes(number)) {
-      return orderAmount / targetNumbers.length;
-    }
-    return 0;
-  }
-
-  // 生肖
-  if (betType === '生肖' && numberData.zodiac[betValue]) {
-    const targetNumbers = numberData.zodiac[betValue];
-    if (targetNumbers.includes(number)) {
-      return orderAmount / targetNumbers.length;
-    }
-    return 0;
-  }
-
-  // 波色
-  if (betType === '波色' && numberData.wave[betValue]) {
-    const targetNumbers = numberData.wave[betValue];
-    if (targetNumbers.includes(number)) {
-      return orderAmount / targetNumbers.length;
-    }
-    return 0;
-  }
-
-  // 野兽家畜
-  if (betType === '野兽家畜' && numberData.beast[betValue]) {
-    const targetNumbers = numberData.beast[betValue];
-    if (targetNumbers.includes(number)) {
-      return orderAmount / targetNumbers.length;
-    }
-    return 0;
-  }
-
-  // 五行
-  if (betType === '五行' && numberData.element[betValue]) {
-    const targetNumbers = numberData.element[betValue];
-    if (targetNumbers.includes(number)) {
-      return orderAmount / targetNumbers.length;
-    }
-    return 0;
-  }
-
-  return 0;
-}
-
-
-
-// 生成模拟数据
-function generateMockData() {
+// 初始化号码统计数据（空状态）
+function initNumberStats() {
   const data = [];
-  const hotNumbers = [7, 18, 25, 33, 42];
-
   for (let i = 1; i <= 49; i++) {
-    let amount = 0;
-    let bets = 0;
-
-    if (hotNumbers.includes(i)) {
-      amount = Math.random() * 500 + 300;
-      bets = Math.floor(Math.random() * 5) + 3;
-    } else if (Math.random() > 0.4) {
-      amount = Math.random() * 200 + 50;
-      bets = Math.floor(Math.random() * 3) + 1;
-    } else {
-      amount = Math.random() * 50;
-      bets = Math.random() > 0.5 ? 1 : 0;
-    }
-
-    const payout = amount * 47;
-    const riskRatio = amount > 0 ? (payout / 15680 * 100).toFixed(1) : 0;
-
-    let riskLevel = 'none';
-    if (payout > 15000) riskLevel = 'high';
-    else if (payout > 5000) riskLevel = 'medium';
-    else if (payout > 0) riskLevel = 'low';
-
     data.push({
       number: i,
-      amount: amount,
-      bets: bets,
-      payout: payout,
-      riskRatio: riskRatio,
-      riskLevel: riskLevel
+      amount: 0,
+      bets: 0,
+      payout: 0,
+      riskRatio: 0,
+      riskLevel: 'none'
     });
   }
-
   return data;
 }
 
-const mockData = generateMockData();
+const mockData = initNumberStats();
 
 // 投注记录存储
 let bettingRecords = [];
@@ -364,71 +265,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
   });
 });
 
-// 验证投注内容
-function validateBetValue(betType, betValue) {
-  switch (betType) {
-    case 'DIRECT':
-      const num = parseInt(betValue);
-      if (isNaN(num) || num < 1 || num > 49) {
-        return { valid: false, message: '特码直投请输入1-49的号码' };
-      }
-      return { valid: true };
 
-    case 'SIZE':
-      if (!['大', '小'].includes(betValue)) {
-        return { valid: false, message: '大小玩法请输入"大"或"小"' };
-      }
-      return { valid: true };
 
-    case 'ODD_EVEN':
-      if (!['单', '双'].includes(betValue)) {
-        return { valid: false, message: '单双玩法请输入"单"或"双"' };
-      }
-      return { valid: true };
 
-    case 'TAIL_SIZE':
-      if (!['尾大', '尾小'].includes(betValue)) {
-        return { valid: false, message: '尾大尾小请输入"尾大"或"尾小"' };
-      }
-      return { valid: true };
-
-    case 'WAVE':
-      if (!['红', '蓝', '绿'].includes(betValue)) {
-        return { valid: false, message: '波色请输入"红"、"蓝"或"绿"' };
-      }
-      return { valid: true };
-
-    case 'ZODIAC':
-      const zodiacs = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
-      if (!zodiacs.includes(betValue)) {
-        return { valid: false, message: '生肖请输入正确的生肖名称' };
-      }
-      return { valid: true };
-
-    case 'ELEMENT':
-      if (!['金', '木', '水', '火', '土'].includes(betValue)) {
-        return { valid: false, message: '五行请输入"金"、"木"、"水"、"火"或"土"' };
-      }
-      return { valid: true };
-
-    default:
-      return { valid: true };
-  }
-}
-
-// 获取玩法名称
-function getBetTypeName(betType) {
-  const names = {
-    'DIRECT': '特码直投',
-    'SIZE': '大小',
-    'ODD_EVEN': '单双',
-    'TAIL_SIZE': '尾大尾小',
-    'WAVE': '波色',
-    'ZODIAC': '生肖',
-    'ELEMENT': '五行'
-  };
-  return names[betType] || betType;
-}
 
 // 渲染投注记录（表格形式 - 复用结算页面的订单表格）
 function renderBettingRecords() {
@@ -550,7 +389,7 @@ function renderAnalysisCards() {
         <div class="analysis-bar-item">
           <div class="bar-label">
             <span>${item.label}</span>
-            <span class="bar-value">¥${amount.toFixed(0)} (${percentage}%)</span>
+            <span class="bar-value">¥${amount.toFixed(2)} (${percentage}%)</span>
           </div>
           <div class="bar-track">
             <div class="bar-fill" style="width: ${percentage}%; background: linear-gradient(90deg, ${item.color}, ${item.color}dd);"></div>
@@ -625,8 +464,8 @@ function renderHeatmap(sortBy = globalSortBy) {
         <div class="cell-number wave-${waveColor}">${item.number}</div>
         <div class="cell-zodiac">${zodiac}</div>
       </div>
-      <div class="cell-amount">¥${item.amount.toFixed(0)}</div>
-      <div class="cell-payout">赔${item.payout.toFixed(0)}</div>
+      <div class="cell-amount">¥${item.amount.toFixed(2)}</div>
+      <div class="cell-payout">赔${item.payout.toFixed(2)}</div>
     `;
 
     cell.addEventListener('click', () => {
@@ -662,14 +501,14 @@ function renderCategoryAnalysis(containerId, dataKey, colorMap = {}) {
     <div class="analysis-item">
       <div class="analysis-item-header">
         <span class="analysis-item-name">${item.name}${dataKey === 'wave' ? '波' : ''}</span>
-        <span class="analysis-item-amount">¥${item.amount.toFixed(0)}</span>
+        <span class="analysis-item-amount">¥${item.amount.toFixed(2)}</span>
       </div>
       <div class="analysis-item-bar">
         <div class="analysis-item-fill" style="width: ${item.percentage}%; background: ${item.color};"></div>
       </div>
       <div class="analysis-item-stats">
         <span>占比: ${item.percentage}%</span>
-        <span>赔付: ¥${item.payout.toFixed(0)}</span>
+        <span>赔付: ¥${item.payout.toFixed(2)}</span>
       </div>
       <div class="analysis-item-numbers">包含号码(按投注额): ${item.numbers.join(', ')}</div>
     </div>
@@ -743,73 +582,82 @@ function showNumberModal(item) {
   document.getElementById('modal-risk').textContent = riskText;
   document.getElementById('modal-risk').className = `stat-value ${item.riskLevel === 'high' ? 'danger' : ''}`;
 
-  // 生成模拟订单
+  // 获取相关订单 (优先使用真实记录)
   const ordersList = document.getElementById('orders-list');
-  if (item.bets > 0) {
-    const orders = [];
+  let relatedOrders = bettingRecords.filter(r => r.betNumbers.includes(item.number));
 
-    // 定义可能的玩法和对应的投注值
-    const betTypes = [
-      { type: '特码直投', value: item.number.toString() },
-      { type: '大小', value: item.number >= 25 ? '大' : '小' },
-      { type: '单双', value: item.number % 2 === 1 ? '单' : '双' },
-      { type: '尾大尾小', value: numberData.tailSize['尾大'].includes(item.number) ? '尾大' : '尾小' },
-      { type: '波色', value: numberData.wave['红'].includes(item.number) ? '红' : numberData.wave['蓝'].includes(item.number) ? '蓝' : '绿' }
-    ];
+  // 如果没有真实记录但在Mock数据中有显示（仅限展示Demo情况），则生成符合真实结构的Mock数据
 
-    // 添加生肖玩法
-    for (const [zodiacName, numbers] of Object.entries(numberData.zodiac)) {
-      if (numbers.includes(item.number)) {
-        betTypes.push({ type: '生肖', value: zodiacName });
-        break;
-      }
-    }
+  if (relatedOrders.length > 0) {
+    ordersList.innerHTML = `
+      <table class="modal-orders-table" style="width: 100%; text-align: left; border-collapse: separate; border-spacing: 0; margin-top: 10px;">
+        <thead>
+          <tr style="background: rgba(255,255,255,0.05); color: #94a3b8; font-size: 12px;">
+            <th style="padding: 10px;">订单/时间</th>
+            <th style="padding: 10px;">玩家</th>
+            <th style="padding: 10px;">玩法/赔率</th>
+            <th style="padding: 10px;">投注内容</th>
+            <th style="padding: 10px;">单注</th>
+            <th style="padding: 10px;">投注额</th>
+            <th style="padding: 10px;">潜在赔付</th>
+          </tr>
+        </thead>
+        <tbody style="font-size: 13px; color: #e2e8f0;">
+          ${relatedOrders.map(order => {
+      const payout = (order.betAmountPerNumber || order.totalAmount) * 47;
+      const singleNum = order.betNumbers[0]; // 简化显示取第一个
 
-    for (let i = 0; i < item.bets; i++) {
-      const selectedBet = betTypes[Math.floor(Math.random() * betTypes.length)];
-      const orderAmount = Math.random() * 200 + 50;
-      const allocatedAmount = calculateAllocatedAmount(item.number, selectedBet.type, selectedBet.value, orderAmount);
+      // 详情行内容生成 (复用结算页面的逻辑)
+      const numCount = order.betNumbers.length;
+      const allNums = order.betNumbers.map(n => {
+        const wave = getNumberWaveColor(n);
+        // 暂时不计算中奖样式，因为这是未结算状态的查看，或者假设当前点开的号码是"中奖"号码?
+        // 为了视觉效果，高亮当前查看的号码 item.number
+        const isHighlight = n === item.number;
+        const highlightStyle = isHighlight
+          ? 'border: 2px solid #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.6); transform: scale(1.1); z-index: 10;'
+          : 'border: 1px solid transparent; opacity: 0.8;';
 
-      const orderId = `${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+        return `<span style="display:inline-block; width:24px; height:24px; line-height:22px; text-align:center; border-radius:50%; background:#334155; margin:3px; color:#fff; position:relative; ${highlightStyle}" class="ball-${wave}">
+                            ${n}
+                        </span>`;
+      }).join('');
 
-      orders.push({
-        orderId: orderId,
-        player: `玩家${Math.floor(Math.random() * 1000)}`,
-        time: `${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
-        type: selectedBet.type,
-        value: selectedBet.value,
-        amount: orderAmount,
-        allocated: allocatedAmount
-      });
-    }
-
-    ordersList.innerHTML = orders.map(order => `
-      <div class="order-item">
-        <div class="order-header">
-          <span class="order-player">${order.player}</span>
-          <span class="order-time">${order.time}</span>
-        </div>
-        <div class="order-id">订单号: ${order.orderId}</div>
-        <div class="order-details">
-          <div class="order-detail">
-            <span class="detail-label">玩法</span>
-            <span class="detail-value">${order.type}</span>
-          </div>
-          <div class="order-detail">
-            <span class="detail-label">投注内容</span>
-            <span class="detail-value">${order.value}</span>
-          </div>
-          <div class="order-detail">
-            <span class="detail-label">投注额</span>
-            <span class="detail-value">¥${order.amount.toFixed(2)}</span>
-          </div>
-          <div class="order-detail">
-            <span class="detail-label">分配到此号</span>
-            <span class="detail-value highlight">¥${order.allocated.toFixed(2)}</span>
-          </div>
-        </div>
-      </div>
-    `).join('');
+      return `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s;" onclick="toggleModalOrderDetail(this)" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+              <td style="padding: 10px;">
+                <div style="font-family: monospace;">${order.orderId}</div>
+                <div style="font-size: 11px; color: #64748b;">${order.timestamp || order.time}</div>
+              </td>
+              <td style="padding: 10px;">${order.playerName || order.player}</td>
+              <td style="padding: 10px;">
+                <span>${order.betType || order.type}</span> <span style="color: #f59e0b; font-size: 11px;">@47.0</span>
+              </td>
+              <td style="padding: 10px;">
+                <span class="preview-number ball-${getNumberWaveColor(singleNum)}" style="display:inline-block; width:20px; height:20px; line-height:20px; text-align:center; border-radius:50%; background:#334155; font-size:11px;">${singleNum}</span>
+                ${numCount > 1 ? `<span style="font-size:10px; color:#94a3b8; margin-left:4px;">等${numCount}注</span>` : ''}
+              </td>
+              <td style="padding: 10px;">¥${(order.betAmountPerNumber || order.amount).toFixed(2)}</td>
+              <td style="padding: 10px;">¥${(order.totalAmount || order.amount).toFixed(2)}</td>
+              <td style="padding: 10px; color: #f87171; font-weight: bold;">¥${payout.toFixed(2)}</td>
+            </tr>
+            <tr class="modal-detail-row" style="display:none; background: rgba(0,0,0,0.2);">
+                <td colspan="7" style="padding: 0;">
+                    <div style="padding: 15px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                        <div style="font-size:12px; color:#94a3b8; margin-bottom:8px;">完整投注内容 (${numCount}注):</div>
+                        <div style="display: flex; flex-wrap: wrap;">${allNums}</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #64748b; display: flex; gap: 20px;">
+                            <span>单注金额: ¥${(order.betAmountPerNumber || order.amount).toFixed(2)}</span>
+                            <span>总金额: ¥${(order.totalAmount || order.amount).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+          `;
+    }).join('')}
+        </tbody>
+      </table>
+    `;
   } else {
     ordersList.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暂无投注订单</div></div>';
   }
@@ -843,97 +691,7 @@ if (refreshBtn) {
   refreshBtn.addEventListener('click', () => location.reload());
 }
 
-// 渲染玩法分布
-function renderDistribution() {
-  const container = document.getElementById('distribution-grid');
 
-  // 统计各玩法的实际投注数据
-  const betTypeStats = {};
-  const betTypeNames = {
-    '特码直投': { color: '#7c3aed', odds: 47 },
-    '大小': { color: '#3b82f6', odds: 1.88 },
-    '单双': { color: '#10b981', odds: 1.88 },
-    '尾大尾小': { color: '#f59e0b', odds: 1.88 },
-    '波色': { color: '#ec4899', odds: 1.88 },
-    '生肖': { color: '#8b5cf6', odds: 9.4 },
-    '五行': { color: '#14b8a6', odds: 9.4 }
-  };
-
-  // 初始化统计
-  Object.keys(betTypeNames).forEach(name => {
-    betTypeStats[name] = { amount: 0, count: 0 };
-  });
-
-  // 统计投注记录
-  bettingRecords.forEach(record => {
-    if (betTypeStats[record.betType]) {
-      betTypeStats[record.betType].amount += record.betAmount;
-      betTypeStats[record.betType].count += 1;
-    }
-  });
-
-  const totalAmount = Object.values(betTypeStats).reduce((sum, stat) => sum + stat.amount, 0);
-
-  const distributions = Object.entries(betTypeNames).map(([name, config]) => {
-    const stat = betTypeStats[name];
-    const percentage = totalAmount > 0 ? (stat.amount / totalAmount * 100).toFixed(1) : 0;
-    const payout = stat.amount * config.odds;
-
-    return {
-      name: name,
-      amount: stat.amount,
-      count: stat.count,
-      percentage: percentage,
-      payout: payout,
-      color: config.color
-    };
-  }).filter(item => item.amount > 0); // 只显示有投注的玩法
-
-  if (distributions.length === 0) {
-    // 没有投注数据时显示所有玩法（金额为0）
-    const allDistributions = Object.entries(betTypeNames).map(([name, config]) => ({
-      name: name,
-      amount: 0,
-      count: 0,
-      percentage: 0,
-      payout: 0,
-      color: config.color
-    }));
-
-    container.innerHTML = allDistributions.map(dist => `
-      <div class="dist-card">
-        <div class="dist-header">
-          <span class="dist-name">${dist.name}</span>
-          <span class="dist-percentage">0%</span>
-        </div>
-        <div class="dist-bar">
-          <div class="dist-fill" style="width: 0%; background: ${dist.color};"></div>
-        </div>
-        <div class="dist-stats">
-          <span>投注额: ¥${dist.amount.toFixed(0)}</span>
-          <span>赔付: ¥${dist.payout.toFixed(0)}</span>
-        </div>
-      </div>
-    `).join('');
-    return;
-  }
-
-  container.innerHTML = distributions.map(dist => `
-    <div class="dist-card">
-      <div class="dist-header">
-        <span class="dist-name">${dist.name}</span>
-        <span class="dist-percentage">${dist.percentage}%</span>
-      </div>
-      <div class="dist-bar">
-        <div class="dist-fill" style="width: ${dist.percentage}%; background: ${dist.color};"></div>
-      </div>
-      <div class="dist-stats">
-        <span>投注额: ¥${dist.amount.toFixed(0)}</span>
-        <span>赔付: ¥${dist.payout.toFixed(0)}</span>
-      </div>
-    </div>
-  `).join('');
-}
 
 
 
@@ -943,17 +701,17 @@ function updateMetrics() {
   const totalCount = mockData.reduce((sum, item) => sum + item.bets, 0);
   const maxPayoutItem = mockData.reduce((max, item) => item.payout > max.payout ? item : max, mockData[0]);
 
-  document.getElementById('total-bets').textContent = `¥${totalBets.toFixed(0)}`;
+  document.getElementById('total-bets').textContent = `¥${totalBets.toFixed(2)}`;
   document.getElementById('total-change').textContent = `${totalCount} 笔`;
-  document.getElementById('max-payout').textContent = `¥${maxPayoutItem.payout.toFixed(0)}`;
+  document.getElementById('max-payout').textContent = `¥${maxPayoutItem.payout.toFixed(2)}`;
   document.getElementById('max-number').textContent = `号码 ${maxPayoutItem.number}`;
   document.getElementById('bet-count').textContent = totalCount;
-  document.getElementById('avg-bet').textContent = `平均 ¥${(totalBets / totalCount).toFixed(0)}`;
+  document.getElementById('avg-bet').textContent = `平均 ¥${(totalBets / totalCount).toFixed(2)}`;
 
   // 预期盈亏 (假设每个号码中奖概率相同)
   const expectedPayout = mockData.reduce((sum, item) => sum + item.payout, 0) / 49;
   const expectedProfit = totalBets - expectedPayout;
-  document.getElementById('expected-profit').textContent = `¥${expectedProfit.toFixed(0)}`;
+  document.getElementById('expected-profit').textContent = `¥${expectedProfit.toFixed(2)}`;
   document.getElementById('profit-status').textContent = expectedProfit > 0 ? '预期盈利' : '预期亏损';
   document.getElementById('profit-status').className = expectedProfit > 0 ? 'metric-change positive' : 'metric-change negative';
 }
@@ -979,7 +737,7 @@ function renderHorizontalChart(type = 'amount', sortBy = globalSortBy) {
   const barsHtml = sortedData.map(item => {
     const value = type === 'bets' ? item.bets : item.amount;
     const heightPercentage = maxValue > 0 ? (value / maxValue * 100) : 0;
-    const displayValue = type === 'bets' ? `${value}次` : `¥${value.toFixed(0)}`;
+    const displayValue = type === 'bets' ? `${value}次` : `¥${value.toFixed(2)}`;
     const waveColor = getNumberWaveColor(item.number);
     const zodiac = getZodiacForNumber(item.number);
 
@@ -1878,7 +1636,7 @@ function renderOrdersTable(bets, options = { isSettled: true, allowDelete: false
           <th style="padding: 12px; border-bottom: 1px solid #334155;">玩家</th>
           <th style="padding: 12px; border-bottom: 1px solid #334155;">玩法/赔率</th>
           <th style="padding: 12px; border-bottom: 1px solid #334155;">内容摘要</th>
-          <th style="padding: 12px; border-bottom: 1px solid #334155;">单价</th>
+          <th style="padding: 12px; border-bottom: 1px solid #334155;">单注</th>
           <th style="padding: 12px; border-bottom: 1px solid #334155;">投注额</th>
           <th style="padding: 12px; border-bottom: 1px solid #334155;">结果(回报)</th>
           <th style="padding: 12px; border-bottom: 1px solid #334155;">庄家盈亏</th>
@@ -1934,8 +1692,8 @@ function renderOrdersTable(bets, options = { isSettled: true, allowDelete: false
                   <span style="color: #fbbf24; font-size: 11px; font-weight: bold;">${oddsDisplay}</span>
               </td>
               <td style="padding: 12px; color: #a5b4fc;">${summary}</td>
-              <td style="padding: 12px;">¥${bet.betAmountPerNumber.toFixed(0)}</td>
-              <td style="padding: 12px; font-weight:bold;">¥${bet.totalAmount.toFixed(0)}</td>
+              <td style="padding: 12px;">¥${bet.betAmountPerNumber.toFixed(2)}</td>
+              <td style="padding: 12px; font-weight:bold;">¥${bet.totalAmount.toFixed(2)}</td>
               <td style="padding: 12px;">
                   <span class="${resultClass}" style="font-weight:bold;">${resultAmount}</span>
               </td>
@@ -1961,7 +1719,7 @@ function renderOrdersTable(bets, options = { isSettled: true, allowDelete: false
                      ${bet.hasWin ? `
                      <div style="min-width: 120px; text-align: right; display: flex; flex-direction: column; justify-content: center; border-left: 1px dashed #334155; padding-left: 20px;">
                         <div style="font-size:12px; color:#64748b;">中奖金额</div>
-                        <div style="font-size: 24px; color:#ef4444; font-weight:bold; margin: 4px 0;">¥${bet.payout.toFixed(0)}</div>
+                        <div style="font-size: 24px; color:#ef4444; font-weight:bold; margin: 4px 0;">¥${bet.payout.toFixed(2)}</div>
                         <div style="font-size:11px; color:#94a3b8;">赔率 ${oddsDisplay}</div>
                      </div>
                      ` : ''}
@@ -2104,30 +1862,7 @@ function calculateSettlementFixed(specialNumber) {
       let isWin = false;
       const betType = record.betType;
 
-      if (betType === '特码直投') {
-        if (betVal === specialNumber) isWin = true;
-      } else if (betType === '大小') {
-        const target = record.betValue === '大' ? numberData.size['大'] : numberData.size['小'];
-        if (target && target.includes(specialNumber)) isWin = true;
-      } else if (betType === '单双') {
-        const target = record.betValue === '单' ? numberData.parity['单'] : numberData.parity['双'];
-        if (target && target.includes(specialNumber)) isWin = true;
-      } else if (betType === '波色') {
-        const target = numberData.wave[record.betValue];
-        if (target && target.includes(specialNumber)) isWin = true;
-      } else if (betType === '生肖') {
-        const target = numberData.zodiac[record.betValue];
-        if (target && target.includes(specialNumber)) isWin = true;
-      } else if (betType === '五行') {
-        const target = numberData.element[record.betValue];
-        if (target && target.includes(specialNumber)) isWin = true;
-      } else if (betType === '尾大尾小') {
-        const target = record.betValue === '尾大' ? numberData.tailSize['尾大'] : numberData.tailSize['尾小'];
-        if (target && target.includes(specialNumber)) isWin = true;
-      } else if (betType === '野兽家畜') {
-        const target = numberData.beast[record.betValue] || numberData.beast[record.betValue === '野' ? '野兽' : '家畜']; // 兼容
-        if (target && target.includes(specialNumber)) isWin = true;
-      }
+      if (betVal === specialNumber) isWin = true;
 
       if (isWin) {
         winNumbers.push(betVal);
@@ -2158,15 +1893,8 @@ function calculateSettlementFixed(specialNumber) {
     });
 
     // 重新计算该订单的总赔付 (如果两面盘，需要正确赔率)
-    // 临时修正赔率逻辑：
-    // 直投: 48 (通常 1:48 左右)
-    // 两面: 1.98
-    // 生肖: 12
-    // 波色: 3
+    // 特码直投默认赔率
     let odds = 47.0;
-    if (['大小', '单双', '尾大尾小', '野兽家畜'].includes(record.betType)) odds = 1.96;
-    if (['生肖'].includes(record.betType)) odds = 11.5;
-    if (['波色'].includes(record.betType)) odds = 2.8;
 
     // 注意：上面的 winNumbers.push(betVal) 对于非直投可能不适用，因为 betVal 可能是 '大' 或 具体号码
     // 之前的系统似乎在下注时就把 '大' 转换成了 25,26...49 这些号码？
@@ -2264,7 +1992,7 @@ function renderSettlementResult(drawNumbers, results) {
           </div>
           <div class="settle-summary-card">
             <div class="settle-summary-label">投注额</div>
-            <div class="settle-summary-value">¥${results.totalBetAmount.toFixed(0)}</div>
+            <div class="settle-summary-value">¥${results.totalBetAmount.toFixed(2)}</div>
           </div>
           <div class="settle-summary-card">
             <div class="settle-summary-label">中奖</div>
@@ -2272,7 +2000,7 @@ function renderSettlementResult(drawNumbers, results) {
           </div>
           <div class="settle-summary-card">
             <div class="settle-summary-label">赔付</div>
-            <div class="settle-summary-value loss">¥${results.totalPayout.toFixed(0)}</div>
+            <div class="settle-summary-value loss">¥${results.totalPayout.toFixed(2)}</div>
           </div>
         </div>
       </div>
@@ -2280,7 +2008,7 @@ function renderSettlementResult(drawNumbers, results) {
       <div class="settle-profit-banner ${bannerClass}">
         <div class="settle-profit-title">庄家盈亏</div>
         <div class="settle-profit-amount ${profitClass}">${profitSign}¥${Math.abs(results.profit).toFixed(2)}</div>
-        <div class="settle-profit-subtitle">收入 ¥${results.totalBetAmount.toFixed(0)} − 赔付 ¥${results.totalPayout.toFixed(0)}</div>
+        <div class="settle-profit-subtitle">收入 ¥${results.totalBetAmount.toFixed(2)} − 赔付 ¥${results.totalPayout.toFixed(2)}</div>
       </div>`;
 
 
@@ -2299,9 +2027,18 @@ window.toggleOrderDetail = function (btn) {
   if (detailRow && detailRow.classList.contains('detail-row')) {
     const isVisible = detailRow.style.display !== 'none';
     detailRow.style.display = isVisible ? 'none' : 'table-row';
-    btn.textContent = isVisible ? '详情' : '收起';
     btn.style.color = isVisible ? '#94a3b8' : '#3b82f6';
     btn.style.borderColor = isVisible ? '#475569' : '#3b82f6';
+  }
+};
+
+// 模态框订单详情切换
+window.toggleModalOrderDetail = function (row) {
+  const detailRow = row.nextElementSibling;
+  if (detailRow && detailRow.classList.contains('modal-detail-row')) {
+    const isVisible = detailRow.style.display !== 'none';
+    detailRow.style.display = isVisible ? 'none' : 'table-row';
+    row.style.background = isVisible ? 'transparent' : 'rgba(255,255,255,0.08)';
   }
 };
 
@@ -2316,7 +2053,7 @@ function renderBetTable(bets) {
             <th style="padding: 12px; border-bottom: 1px solid #334155;">玩家</th>
             <th style="padding: 12px; border-bottom: 1px solid #334155;">玩法/赔率</th>
             <th style="padding: 12px; border-bottom: 1px solid #334155;">内容摘要</th>
-            <th style="padding: 12px; border-bottom: 1px solid #334155;">单价</th>
+            <th style="padding: 12px; border-bottom: 1px solid #334155;">单注</th>
             <th style="padding: 12px; border-bottom: 1px solid #334155;">投注额</th>
             <th style="padding: 12px; border-bottom: 1px solid #334155;">结果(回报)</th>
             <th style="padding: 12px; border-bottom: 1px solid #334155;">庄家盈亏</th>
@@ -2371,8 +2108,8 @@ function renderBetTable(bets) {
                     <span style="color: #fbbf24; font-size: 11px; font-weight: bold;">${oddsDisplay}</span>
                 </td>
                 <td style="padding: 12px; color: #a5b4fc;">${summary}</td>
-                <td style="padding: 12px;">¥${bet.betAmountPerNumber.toFixed(0)}</td>
-                <td style="padding: 12px; font-weight:bold;">¥${bet.totalAmount.toFixed(0)}</td>
+                <td style="padding: 12px;">¥${bet.betAmountPerNumber.toFixed(2)}</td>
+                <td style="padding: 12px; font-weight:bold;">¥${bet.totalAmount.toFixed(2)}</td>
                 <td style="padding: 12px;">
                     <div style="font-weight:bold; color: ${resultColor}; margin-bottom: 2px;">${resultText}</div>
                     <div style="font-size: 11px; color: ${bet.hasWin ? '#ef4444' : '#64748b'};">${resultAmount}</div>
@@ -2398,7 +2135,7 @@ function renderBetTable(bets) {
                        ${bet.hasWin ? `
                        <div style="min-width: 120px; text-align: right; display: flex; flex-direction: column; justify-content: center; border-left: 1px dashed #334155; padding-left: 20px;">
                           <div style="font-size:12px; color:#64748b;">中奖金额</div>
-                          <div style="font-size: 24px; color:#ef4444; font-weight:bold; margin: 4px 0;">¥${bet.payout.toFixed(0)}</div>
+                          <div style="font-size: 24px; color:#ef4444; font-weight:bold; margin: 4px 0;">¥${bet.payout.toFixed(2)}</div>
                           <div style="font-size:11px; color:#94a3b8;">赔率 ${oddsDisplay}</div>
                        </div>
                        ` : ''}
