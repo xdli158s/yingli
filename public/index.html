@@ -18,13 +18,13 @@
       </div>
 
       <nav class="nav-menu">
-        <a href="#analysis" class="nav-item active" data-page="analysis">
-          <span class="nav-icon">📊</span>
-          <span class="nav-text">风险分析</span>
-        </a>
         <a href="#betting" class="nav-item" data-page="betting">
           <span class="nav-icon">📝</span>
           <span class="nav-text">投注管理</span>
+        </a>
+        <a href="#analysis" class="nav-item active" data-page="analysis">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">风险分析</span>
         </a>
         <a href="#settlement" class="nav-item" data-page="settlement">
           <span class="nav-icon">🎯</span>
@@ -232,7 +232,7 @@
                 </div>
               </div>
               <div class="input-group amount-preview">
-                <label>投注总额</label>
+                <label>投注额</label>
                 <div class="total-amount" id="total-bet-amount">¥0.00</div>
               </div>
               <button class="btn-quick-submit" id="btn-quick-submit">
@@ -373,7 +373,7 @@
             <h2>本期投注记录</h2>
             <div class="record-stats">
               <span>共 <strong id="record-count">0</strong> 单</span>
-              <span>总额 <strong id="record-total">¥0</strong></span>
+              <span>投注总额 <strong id="record-total">¥0</strong></span>
             </div>
           </div>
           <div class="records-table-container">
@@ -385,7 +385,7 @@
                   <th>玩法/赔率</th>
                   <th>内容摘要</th>
                   <th>单价</th>
-                  <th>总额</th>
+                  <th>投注额</th>
                   <th>结果(回报)</th>
                   <th>庄家盈亏</th>
                   <th>操作</th>
