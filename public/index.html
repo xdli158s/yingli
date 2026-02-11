@@ -404,12 +404,17 @@
                 <!-- 开奖输入区 -->
                 <section class="settle-input-section">
                     <div class="settle-input-card">
-                        <!-- 期数选择器 -->
+                        <!-- 期数选择器 + 开奖号码显示（紧凑版） -->
                         <div class="period-selector-bar">
                             <label for="period-selector">选择期数：</label>
                             <select id="period-selector" class="period-select">
                                 <!-- 动态填充期数选项 -->
                             </select>
+                            
+                            <!-- 开奖号码显示（紧凑版，在选择框后面） -->
+                            <div class="draw-number-compact" id="draw-number-compact">
+                                <span class="draw-status-text">待开奖</span>
+                            </div>
                             
                             <!-- 获取开奖号码按钮（仅在开奖时段显示） -->
                             <button class="btn-fetch-inline" id="btn-fetch-draw-inline" style="display: none;">
@@ -420,13 +425,6 @@
                                 </svg>
                                 获取开奖号码
                             </button>
-                        </div>
-                        
-                        <!-- 开奖号码显示区（大号显示） -->
-                        <div class="draw-number-section" id="draw-number-section">
-                            <div class="draw-number-display-large" id="draw-number-display">
-                                <span class="draw-status-text">待开奖</span>
-                            </div>
                         </div>
 
                         <!-- 手动输入开奖号码区（仅在当前期未开奖时显示） -->

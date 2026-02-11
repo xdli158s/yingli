@@ -1540,9 +1540,9 @@ function fillDrawInputs(numbers) {
   });
 }
 
-// 更新开奖号码显示区
+// 更新开奖号码显示区（紧凑版）
 function updateDrawNumberDisplay(numbers = null) {
-  const displayEl = document.getElementById('draw-number-display');
+  const displayEl = document.getElementById('draw-number-compact');
   if (!displayEl) return;
 
   if (!numbers || numbers.length === 0) {
@@ -1556,12 +1556,42 @@ function updateDrawNumberDisplay(numbers = null) {
     const isDrawingTime = (hour === 21 && minute >= 30 && minute <= 36);
     
     if (isDrawingTime) {
-      displayEl.innerHTML = '<span class="draw-status-text drawing">开奖中.....</span>';
+      // 开奖中：显示占位符
+      displayEl.innerHTML = `
+        <span class="draw-placeholder-label">正码</span>
+        <div class="draw-placeholder-balls">
+          <div class="draw-placeholder-ball">码</div>
+          <div class="draw-placeholder-ball">码</div>
+          <div class="draw-placeholder-ball">码</div>
+          <div class="draw-placeholder-ball">码</div>
+          <div class="draw-placeholder-ball">码</div>
+          <div class="draw-placeholder-ball">码</div>
+        </div>
+        <span class="draw-placeholder-label">特码</span>
+        <div class="draw-placeholder-balls">
+          <div class="draw-placeholder-ball special">码</div>
+        </div>
+      `;
     } else {
-      displayEl.innerHTML = '<span class="draw-status-text pending">待开奖</span>';
+      // 待开奖：显示占位符
+      displayEl.innerHTML = `
+        <span class="draw-placeholder-label">正码</span>
+        <div class="draw-placeholder-balls">
+          <div class="draw-placeholder-ball">码</div>
+          <div class="draw-placeholder-ball">码</div>
+          <div class="draw-placeholder-ball">码</div>
+          <div class="draw-placeholder-ball">码</div>
+          <div class="draw-placeholder-ball">码</div>
+          <div class="draw-placeholder-ball">码</div>
+        </div>
+        <span class="draw-placeholder-label">特码</span>
+        <div class="draw-placeholder-balls">
+          <div class="draw-placeholder-ball special">码</div>
+        </div>
+      `;
     }
   } else {
-    // 显示大号开奖号码
+    // 显示紧凑版开奖号码
     const specialNumber = numbers[6];
     const attrs = getNumberAttributes(specialNumber);
     
@@ -1570,25 +1600,22 @@ function updateDrawNumberDisplay(numbers = null) {
       const zodiac = getZodiacForNumber(num);
       const isSpecial = idx === 6;
       return `
-        <div class="draw-large-ball">
-          <div class="draw-large-ball-circle ball-${waveColor} ${isSpecial ? 'special' : ''}">
+        <div class="draw-compact-ball">
+          <div class="draw-compact-ball-circle ball-${waveColor} ${isSpecial ? 'special' : ''}">
             ${String(num).padStart(2, '0')}
           </div>
-          <div class="draw-large-ball-zodiac">${zodiac}</div>
+          <div class="draw-compact-ball-zodiac">${zodiac}</div>
         </div>
       `;
     }).join('');
     
     const attrsHtml = attrs.map(attr => 
-      `<span class="draw-attr-tag ${attr.class}">${attr.text}</span>`
+      `<span class="draw-compact-attr-tag ${attr.class}">${attr.text}</span>`
     ).join('');
     
     displayEl.innerHTML = `
-      <div class="draw-number-balls-large">${ballsHtml}</div>
-      <div class="draw-number-attrs">
-        <span class="draw-attr-label">特码:</span>
-        ${attrsHtml}
-      </div>
+      <div class="draw-compact-balls">${ballsHtml}</div>
+      <div class="draw-compact-attrs">${attrsHtml}</div>
     `;
   }
 }
