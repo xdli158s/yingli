@@ -1474,9 +1474,10 @@ function getNumberAttributes(num) {
 
 // 初始化结算页面的号码快选网格
 // 获取最新开奖数据
-// 获取最新开奖数据
 async function fetchLatestResult() {
-  const btn = document.getElementById('btn-fetch-draw');
+  const btn = document.getElementById('btn-fetch-draw-inline');
+  if (!btn) return;
+  
   const originalText = btn.innerHTML;
 
   try {
@@ -1494,26 +1495,14 @@ async function fetchLatestResult() {
       const item = data[0];
 
       if (item.openCode) {
-        // 如果当前期号与API期号不一致，且当前期号大于API期号，说明API数据滞后，不应填充
-        // 这里需要处理期号格式差异，API是 "2025042"，本地是 "2026042"
-        // 假设API期号格式也是 YYYYDDD
-
-        // 简单比较：如果API期号 == 当前期号，或者我们只想看最新数据
-        // 用户需求：如果当前期数还没开奖，不要将旧期数来充当
-
-        // 转换API期号格式（如果需要）
-        // 假设 API 返回的 format 是 YYYYDDD (如 2025042)
-        // 我们现在的格式是 "第042期"
-        // 需要提取 API 的后三位来对比
         const apiExpectStr = String(item.expect);
         const apiDayOfYear = apiExpectStr.slice(-3); // 取后三位 "042"
 
         // 提取当前期号的数字部分 "第042期" -> "042"
-        const currentDayOfYear = currentPeriod.replace(/[^\d]/g, '');
+        const currentDayOfYear = currentPeriod.replace(/[^\d]/g, '').slice(-3);
 
         if (apiDayOfYear !== currentDayOfYear) {
           showToast(`获取到的数据是第 ${apiDayOfYear} 期，与当前 ${currentPeriod} 不符，可能是旧数据`, 'warning');
-          // 根据需求，不填充旧数据
           return;
         }
 
@@ -1522,6 +1511,7 @@ async function fetchLatestResult() {
 
         if (numbers.length === 7) {
           fillDrawInputs(numbers);
+          updateDrawNumberDisplay(numbers);
           showToast(`获取成功: 第${item.expect}期`, 'success');
         } else {
           showToast('获取的数据格式不正确', 'error');
@@ -1548,6 +1538,62 @@ function fillDrawInputs(numbers) {
       input.value = numbers[index];
     }
   });
+}
+
+// 更新开奖号码显示区
+function updateDrawNumberDisplay(numbers = null) {
+  const displayEl = document.getElementById('draw-number-display');
+  if (!displayEl) return;
+
+  if (!numbers || numbers.length === 0) {
+    // 检查是否在开奖时段 (北京时间 21:30-21:36)
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const beijingTime = new Date(utc + (3600000 * 8));
+    const hour = beijingTime.getHours();
+    const minute = beijingTime.getMinutes();
+    
+    const isDrawingTime = (hour === 21 && minute >= 30 && minute <= 36);
+    
+    if (isDrawingTime) {
+      displayEl.innerHTML = '<span class="draw-status-text drawing">开奖中.....</span>';
+    } else {
+      displayEl.innerHTML = '<span class="draw-status-text pending">待开奖</span>';
+    }
+  } else {
+    // 显示开奖号码
+    const ballsHtml = numbers.map((num, idx) => {
+      const waveColor = getNumberWaveColor(num);
+      const isSpecial = idx === 6;
+      return `<div class="draw-mini-ball ball-${waveColor} ${isSpecial ? 'special' : ''}">${String(num).padStart(2, '0')}</div>`;
+    }).join('');
+    
+    displayEl.innerHTML = `<div class="draw-number-balls">${ballsHtml}</div>`;
+  }
+}
+
+// 检查并更新获取按钮显示状态
+function updateFetchButtonVisibility() {
+  const fetchBtn = document.getElementById('btn-fetch-draw-inline');
+  if (!fetchBtn) return;
+
+  // 检查是否在开奖时段 (北京时间 21:30-21:36)
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const beijingTime = new Date(utc + (3600000 * 8));
+  const hour = beijingTime.getHours();
+  const minute = beijingTime.getMinutes();
+  
+  const isDrawingTime = (hour === 21 && minute >= 30 && minute <= 36);
+  
+  // 检查当前期是否已开奖
+  const currentPeriodSettled = drawHistory.some(r => r.period === currentPeriod);
+  
+  if (isDrawingTime && !currentPeriodSettled) {
+    fetchBtn.style.display = 'flex';
+  } else {
+    fetchBtn.style.display = 'none';
+  }
 }
 
 
@@ -1616,18 +1662,16 @@ function showHistoryList() {
   if (drawRow) drawRow.style.display = 'none';
   if (actionRow) actionRow.style.display = 'none';
 
+  // 更新开奖号码显示为空
+  updateDrawNumberDisplay();
+  updateFetchButtonVisibility();
+
   // 显示历史列表
   const historySection = document.getElementById('settle-history-section');
   historySection.style.display = 'block';
 
   // 渲染历史记录
   renderDrawHistory();
-
-  // 更新投注概要为空
-  const summaryContainer = document.getElementById('settle-summary-header');
-  if (summaryContainer) {
-    summaryContainer.innerHTML = '<span class="info-stat" style="color: #94a3b8;">查看历史总记录</span>';
-  }
 }
 
 // 结算页面的过滤状态
@@ -1651,6 +1695,7 @@ function loadPeriodData(period) {
   settleFilterState.playerName = '';
   document.getElementById('settle-search-order').value = '';
   document.getElementById('settle-search-player').value = '';
+  updateFilterStatus();
 
   // 查找历史记录 (无论是当前期还是往期，只要结算过就在这里)
   const historyRecord = drawHistory.find(r => r.period === period);
@@ -1662,14 +1707,9 @@ function loadPeriodData(period) {
     if (drawRow) drawRow.style.display = 'none';
     if (actionRow) actionRow.style.display = 'none';
 
-    // 显示结算摘要 (Total)
-    const summaryContainer = document.getElementById('settle-summary-header');
-    if (summaryContainer) {
-      summaryContainer.innerHTML = `
-        <span class="info-stat">订单 <strong>${historyRecord.totalBets}</strong> 笔</span>
-        <span class="info-stat">投注总额 <strong class="amount">¥${historyRecord.totalBetAmount.toFixed(2)}</strong></span>
-      `;
-    }
+    // 更新开奖号码显示
+    updateDrawNumberDisplay(historyRecord.drawNumbers);
+    updateFetchButtonVisibility();
 
     // 显示开奖结果
     const results = {
@@ -1698,7 +1738,10 @@ function loadPeriodData(period) {
     if (drawRow) drawRow.style.display = '';
     if (actionRow) actionRow.style.display = '';
 
-    updateSettleInfo();
+    // 更新开奖号码显示为待开奖状态
+    updateDrawNumberDisplay();
+    updateFetchButtonVisibility();
+
     // 清空开奖输入框
     document.querySelectorAll('.settle-draw-input').forEach(input => input.value = '');
 
@@ -1706,7 +1749,7 @@ function loadPeriodData(period) {
     document.getElementById('settlement-result').innerHTML = '';
 
     // 设置当前全量数据并渲染
-    currentSettleBets = bettingRecords; //直接使用当前的投注记录
+    currentSettleBets = bettingRecords;
     applySettleFilters(false); // 传入 false 表示未结算
 
     document.getElementById('settle-orders-section').style.display = 'block';
@@ -1725,50 +1768,59 @@ function applySettleFilters(isSettled = true) {
     return matchOrder && matchPlayer;
   });
 
-  // 更新过滤统计栏
-  const totalBets = filteredBets.length;
-  const totalAmount = filteredBets.reduce((sum, b) => sum + b.totalAmount, 0);
-  const winCount = filteredBets.filter(b => b.hasWin).length;
-  const totalPayout = filteredBets.reduce((sum, b) => sum + (b.hasWin ? b.payout : 0), 0);
+  // 更新过滤状态提示
+  updateFilterStatus(orderId, playerName, filteredBets.length, currentSettleBets.length);
 
-  const statsEl = document.getElementById('settle-filter-stats');
-  if (statsEl) {
-    if (orderId || playerName) {
-      // 只有在有搜索条件时才高亮显示筛选结果
-      statsEl.innerHTML = `
-        <span>筛选结果:</span>
-        <span class="filter-stat-val">订单 ${totalBets}</span>
-        <span class="filter-stat-val amount">¥${totalAmount.toFixed(2)}</span>
-        ${isSettled ? `<span class="filter-stat-val" style="color:${winCount > 0 ? '#ef4444' : '#94a3b8'}">中奖 ${winCount}</span>` : ''}
-      `;
-      statsEl.style.display = 'flex';
-    } else {
-      // 默认显示总额预览
-      statsEl.innerHTML = `
-        <span class="filter-stat-val">总订单 ${totalBets}</span>
-        <span class="filter-stat-val amount">¥${totalAmount.toFixed(2)}</span>
-      `;
-    }
-  }
+  // 更新投注概况（根据过滤结果）
+  updateSummarySection(filteredBets, isSettled);
 
-  // 渲染过滤后的列表
-  // 注意：如果 currentSettleBets 是当前期的 bettingRecords，isSettled 应该由外部状态决定
-  // 这我们简单判断，如果是在 historyRecord 分支进来的，isSettled = true (默认)，否则需要传入
-  // 但为了简化，我们复用外部传入的 isSettled。
-  // 注意：loadPeriodData中的调用已经处理了 isSettled 参数
-
-  // 修正：如果调用来自 input event，我们需要知道当前是否已结算
-  // 简单的判断方法：看 settlement-result 是否有内容，或者看 currentSettleBets 是否等于 bettingRecords
-  // 为了准确，我们在 bind events 时不传参数，让函数自己推断? 或者 simply pass data attribute?
-  // 实际上可以通过检测 currentSettleBets === bettingRecords 来判断是否是"当前未结算数据"
-  // (前提是 bettingRecords 没被修改引用)
+  // 判断当前是否已结算
   const isPending = (currentSettleBets === bettingRecords) && (currentPeriod === document.getElementById('period-selector').value);
-
-  // 强制覆盖 isSettled 逻辑: 如果我们正在查看历史记录，那肯定是 settled。
-  // 如果是当前期且没结算，那就是 pending。
   const actualIsSettled = !isPending;
 
+  // 渲染订单列表
   renderOrdersTabs(filteredBets, actualIsSettled);
+}
+
+// 更新过滤状态提示
+function updateFilterStatus(orderId = '', playerName = '', filteredCount = 0, totalCount = 0) {
+  const statusEl = document.getElementById('filter-status');
+  if (!statusEl) return;
+
+  if (orderId || playerName) {
+    let statusText = '当前显示：';
+    if (playerName) statusText += `玩家"${playerName}"`;
+    if (orderId) statusText += (playerName ? '，' : '') + `订单"${orderId}"`;
+    statusText += ` 的数据 (${filteredCount}/${totalCount})`;
+    
+    statusEl.innerHTML = `
+      <span class="filter-status-label">🔍 ${statusText}</span>
+    `;
+    statusEl.classList.add('active');
+  } else {
+    statusEl.innerHTML = '';
+    statusEl.classList.remove('active');
+  }
+}
+
+// 更新投注概况区
+function updateSummarySection(bets, isSettled = true) {
+  const totalBets = bets.length;
+  const totalAmount = bets.reduce((sum, b) => sum + b.totalAmount, 0);
+  const winCount = isSettled ? bets.filter(b => b.hasWin).length : 0;
+  const totalPayout = isSettled ? bets.reduce((sum, b) => sum + (b.hasWin ? b.payout : 0), 0) : 0;
+  const profit = totalAmount - totalPayout;
+
+  document.getElementById('summary-count').textContent = totalBets;
+  document.getElementById('summary-amount').textContent = `¥${totalAmount.toFixed(2)}`;
+  document.getElementById('summary-win').textContent = winCount;
+  
+  const profitEl = document.getElementById('summary-profit');
+  profitEl.textContent = isSettled ? `${profit >= 0 ? '+' : ''}¥${profit.toFixed(2)}` : '-';
+  profitEl.className = 'settle-summary-value';
+  if (isSettled) {
+    profitEl.classList.add(profit >= 0 ? 'profit' : 'loss');
+  }
 }
 
 // 绑定搜索输入事件
@@ -1925,20 +1977,12 @@ function renderOrdersTable(bets, options = { isSettled: true, allowDelete: false
   `;
 }
 function updateSettleInfo() {
-  const summaryContainer = document.getElementById('settle-summary-header');
-
-  if (summaryContainer) {
-    const totalBets = bettingRecords.length;
-    const totalAmount = bettingRecords.reduce((sum, r) => sum + r.totalAmount, 0);
-
-    summaryContainer.innerHTML = `
-      <span class="info-stat">订单 <strong>${totalBets}</strong> 笔</span>
-      <span class="info-stat">投注总额 <strong class="amount">¥${totalAmount.toFixed(2)}</strong></span>
-    `;
-  }
-
   // 更新期数选择器
   updatePeriodSelector();
+  
+  // 更新开奖号码显示
+  updateDrawNumberDisplay();
+  updateFetchButtonVisibility();
 }
 
 // 执行开奖结算
@@ -1977,11 +2021,18 @@ function performSettlement() {
     // 保存到历史 (保存所有号码)
     saveToHistory(drawNumbers, results);
 
+    // 更新开奖号码显示
+    updateDrawNumberDisplay(drawNumbers);
+    updateFetchButtonVisibility();
+
     // 渲染结算结果 (传入所有号码)
     renderSettlementResult(drawNumbers, results);
 
+    // 设置当前全量数据
+    currentSettleBets = results.bets;
+    
     // 渲染订单详情标签页
-    renderOrdersTabs(results.bets);
+    applySettleFilters(true);
 
     // 更新历史记录展示
     renderDrawHistory();
@@ -2540,16 +2591,26 @@ function initSettlementPage() {
   // 渲染历史
   renderDrawHistory();
 
-  // 绑定获取开奖按钮
-  const fetchBtn = document.getElementById('btn-fetch-draw');
-  if (fetchBtn) {
-    fetchBtn.addEventListener('click', fetchLatestResult);
+  // 绑定获取开奖按钮（内联版）
+  const fetchBtnInline = document.getElementById('btn-fetch-draw-inline');
+  if (fetchBtnInline) {
+    fetchBtnInline.addEventListener('click', fetchLatestResult);
   }
 
   // 绑定确认开奖按钮
   const settleBtn = document.getElementById('btn-settle');
   if (settleBtn) {
     settleBtn.addEventListener('click', performSettlement);
+  }
+
+  // 绑定重置筛选按钮
+  const resetFilterBtn = document.getElementById('btn-reset-filter');
+  if (resetFilterBtn) {
+    resetFilterBtn.addEventListener('click', () => {
+      document.getElementById('settle-search-order').value = '';
+      document.getElementById('settle-search-player').value = '';
+      applySettleFilters();
+    });
   }
 
   // 初始化期数选择器
@@ -2590,6 +2651,12 @@ function initSettlementPage() {
   if (clearHistoryBtn) {
     clearHistoryBtn.addEventListener('click', clearDrawHistory);
   }
+
+  // 定时更新开奖状态和按钮显示
+  setInterval(() => {
+    updateDrawNumberDisplay();
+    updateFetchButtonVisibility();
+  }, 60000); // 每分钟检查一次
 }
 
 // 页面加载完成后初始化结算页面

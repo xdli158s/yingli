@@ -2557,3 +2557,232 @@ body {
     border-left-color: var(--secondary);
   }
 }
+
+/* 开奖号码显示区 */
+.draw-number-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  min-width: 200px;
+  flex: 1;
+}
+
+.draw-status-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.draw-status-text.pending {
+  color: #94a3b8;
+}
+
+.draw-status-text.drawing {
+  color: #f59e0b;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.draw-number-balls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.draw-mini-ball {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  position: relative;
+}
+
+.draw-mini-ball.ball-red {
+  background: var(--danger);
+}
+
+.draw-mini-ball.ball-blue {
+  background: var(--secondary);
+}
+
+.draw-mini-ball.ball-green {
+  background: var(--success);
+}
+
+.draw-mini-ball.special {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  border: 2px solid #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+/* 获取开奖号码按钮（内联版） */
+.btn-fetch-inline {
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-fetch-inline:hover {
+  background: var(--border-color);
+  color: var(--text-main);
+  border-color: var(--border-light);
+}
+
+.btn-fetch-inline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-fetch-inline svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* 重置筛选按钮 */
+.btn-reset-filter {
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-reset-filter:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: white;
+}
+
+/* 筛选状态提示 */
+.filter-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+}
+
+.filter-status.active {
+  display: flex;
+}
+
+.filter-status-label {
+  color: var(--secondary);
+  font-weight: 600;
+}
+
+.filter-status-value {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+/* 投注概况区 */
+.settle-summary-section {
+  padding: 16px 20px;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settle-summary-section .settle-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.settle-summary-section .settle-summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.settle-summary-section .settle-summary-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.settle-summary-section .settle-summary-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.settle-summary-section .settle-summary-value.profit {
+  color: var(--success);
+}
+
+.settle-summary-section .settle-summary-value.loss {
+  color: var(--danger);
+}
+
+.settle-summary-section .settle-summary-value.win-count {
+  color: var(--warning);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .period-selector-bar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .draw-number-display {
+    min-width: 100%;
+  }
+
+  .btn-fetch-inline {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filter-inputs {
+    flex-direction: column;
+  }
+
+  .filter-status {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .settle-summary-section .settle-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

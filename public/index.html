@@ -404,18 +404,31 @@
                 <!-- 开奖输入区 -->
                 <section class="settle-input-section">
                     <div class="settle-input-card">
-                        <!-- 期数选择器 -->
+                        <!-- 期数选择器 + 开奖号码显示 -->
                         <div class="period-selector-bar">
                             <label for="period-selector">选择期数：</label>
                             <select id="period-selector" class="period-select">
                                 <!-- 动态填充期数选项 -->
                             </select>
-                            <div class="settle-info-summary" id="settle-summary-header">
-                                <!-- JS 动态填充投注概况 -->
+                            
+                            <!-- 开奖号码显示区 -->
+                            <div class="draw-number-display" id="draw-number-display">
+                                <span class="draw-status-text">待开奖</span>
                             </div>
+                            
+                            <!-- 获取开奖号码按钮（仅在开奖时段显示） -->
+                            <button class="btn-fetch-inline" id="btn-fetch-draw-inline" style="display: none;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" width="14" height="14">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                获取开奖号码
+                            </button>
                         </div>
 
-                        <div class="settle-draw-row">
+                        <!-- 手动输入开奖号码区（仅在未开奖时显示） -->
+                        <div class="settle-draw-row" id="settle-draw-row">
                             <div class="settle-draw-label">正码</div>
                             <div class="settle-draw-inputs" id="settle-inputs-container">
                                 <input type="number" class="settle-draw-input" data-index="0" placeholder="码" min="1"
@@ -436,36 +449,52 @@
                                 min="1" max="49">
                         </div>
 
-                        <div class="settle-actions">
-                            <button class="btn-fetch" id="btn-fetch-draw">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor" width="16" height="16">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                                获取最新开奖
-                            </button>
+                        <div class="settle-actions" id="settle-actions">
                             <button class="btn-settle" id="btn-settle">确认开奖结果</button>
                         </div>
                     </div>
                 </section>
 
-                <!-- 结算结果 -->
-                <div id="settlement-result"></div>
-
                 <!-- 订单详情区（当选择具体期数时显示） -->
                 <section class="settle-orders-section" id="settle-orders-section" style="display: none;">
-                    <!-- 搜索过滤栏 -->
+                    <!-- 搜索过滤栏 - 置顶 -->
                     <div class="settle-filter-bar">
                         <div class="filter-inputs">
-                            <input type="text" id="settle-search-order" placeholder="搜索订单号...">
-                            <input type="text" id="settle-search-player" placeholder="搜索玩家...">
+                            <input type="text" id="settle-search-order" placeholder="🔍 搜索订单号...">
+                            <input type="text" id="settle-search-player" placeholder="🔍 搜索玩家ID...">
+                            <button class="btn-reset-filter" id="btn-reset-filter">重置</button>
                         </div>
-                        <div class="filter-stats" id="settle-filter-stats">
-                            <!-- JS 动态更新过滤后的统计 -->
+                        <div class="filter-status" id="filter-status">
+                            <!-- 显示当前筛选状态 -->
                         </div>
                     </div>
 
+                    <!-- 投注概况（根据过滤条件动态显示） -->
+                    <div class="settle-summary-section" id="settle-summary-section">
+                        <div class="settle-summary-grid">
+                            <div class="settle-summary-card">
+                                <div class="settle-summary-label">笔数</div>
+                                <div class="settle-summary-value" id="summary-count">0</div>
+                            </div>
+                            <div class="settle-summary-card">
+                                <div class="settle-summary-label">投注额</div>
+                                <div class="settle-summary-value" id="summary-amount">¥0.00</div>
+                            </div>
+                            <div class="settle-summary-card">
+                                <div class="settle-summary-label">中奖</div>
+                                <div class="settle-summary-value win-count" id="summary-win">0</div>
+                            </div>
+                            <div class="settle-summary-card">
+                                <div class="settle-summary-label">盈亏</div>
+                                <div class="settle-summary-value" id="summary-profit">¥0.00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 结算结果 -->
+                    <div id="settlement-result"></div>
+
+                    <!-- 订单分类标签 -->
                     <div class="settle-orders-tabs">
                         <button class="settle-tab-btn active" data-tab="all">所有订单 (<span
                                 id="tab-count-all">0</span>)</button>
@@ -473,6 +502,8 @@
                         <button class="settle-tab-btn" data-tab="lose">未中奖订单 (<span
                                 id="tab-count-lose">0</span>)</button>
                     </div>
+                    
+                    <!-- 订单列表 -->
                     <div class="settle-orders-content">
                         <div id="settle-orders-all" class="settle-orders-pane active"></div>
                         <div id="settle-orders-win" class="settle-orders-pane"></div>
