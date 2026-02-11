@@ -1,6 +1,6 @@
 # yingli管理系统
 
-基于 Cloudflare Pages + Workers + D1 的专业庄家投注管理后台系统
+基于 Cloudflare Pages + Workers + D1 的管理后台系统
 
 ## 🎯 快速开始
 
