@@ -273,48 +273,29 @@
                     </div>
 
                     <!-- 号码筛选器 -->
+                    <!-- 号码筛选器 -->
                     <div class="filter-panel">
+                        <!-- 两面 (Big/Small, Odd/Even, Tail Size, Beast) -->
+                        <div class="filter-group">
+                            <div class="filter-title">两面</div>
+                            <div class="filter-buttons">
+                                <button class="filter-btn-bet" data-filter="big">大 (25-49)</button>
+                                <button class="filter-btn-bet" data-filter="small">小 (1-24)</button>
+                                <button class="filter-btn-bet" data-filter="odd">单</button>
+                                <button class="filter-btn-bet" data-filter="even">双</button>
+                                <button class="filter-btn-bet" data-filter="tailBig">尾大 (5-9)</button>
+                                <button class="filter-btn-bet" data-filter="tailSmall">尾小 (0-4)</button>
+                                <button class="filter-btn-bet" data-filter="wild">野兽</button>
+                                <button class="filter-btn-bet" data-filter="domestic">家畜</button>
+                            </div>
+                        </div>
+
                         <div class="filter-group">
                             <div class="filter-title">波色</div>
                             <div class="filter-buttons">
                                 <button class="filter-btn-bet wave-red" data-filter="red">红波</button>
                                 <button class="filter-btn-bet wave-blue" data-filter="blue">蓝波</button>
                                 <button class="filter-btn-bet wave-green" data-filter="green">绿波</button>
-                            </div>
-                        </div>
-
-                        <div class="filter-group">
-                            <div class="filter-title">大小</div>
-                            <div class="filter-buttons">
-                                <button class="filter-btn-bet" data-filter="big">大 (25-49)</button>
-                                <button class="filter-btn-bet" data-filter="small">小 (1-24)</button>
-                            </div>
-                        </div>
-
-                        <div class="filter-group">
-                            <div class="filter-title">单双</div>
-                            <div class="filter-buttons">
-                                <button class="filter-btn-bet" data-filter="odd">单</button>
-                                <button class="filter-btn-bet" data-filter="even">双</button>
-                            </div>
-                        </div>
-
-                        <div class="filter-group">
-                            <div class="filter-title">头数</div>
-                            <div class="filter-buttons">
-                                <button class="filter-btn-bet head-btn" data-filter="head0">0头</button>
-                                <button class="filter-btn-bet head-btn" data-filter="head1">1头</button>
-                                <button class="filter-btn-bet head-btn" data-filter="head2">2头</button>
-                                <button class="filter-btn-bet head-btn" data-filter="head3">3头</button>
-                                <button class="filter-btn-bet head-btn" data-filter="head4">4头</button>
-                            </div>
-                        </div>
-
-                        <div class="filter-group">
-                            <div class="filter-title">家野</div>
-                            <div class="filter-buttons">
-                                <button class="filter-btn-bet" data-filter="wild">野兽</button>
-                                <button class="filter-btn-bet" data-filter="domestic">家畜</button>
                             </div>
                         </div>
 
@@ -330,10 +311,19 @@
                         </div>
 
                         <div class="filter-group">
-                            <div class="filter-title">尾数</div>
+                            <div class="filter-title">头数</div>
                             <div class="filter-buttons">
-                                <button class="filter-btn-bet" data-filter="tailBig">尾大 (5-9)</button>
-                                <button class="filter-btn-bet" data-filter="tailSmall">尾小 (0-4)</button>
+                                <button class="filter-btn-bet head-btn" data-filter="head0">0头</button>
+                                <button class="filter-btn-bet head-btn" data-filter="head1">1头</button>
+                                <button class="filter-btn-bet head-btn" data-filter="head2">2头</button>
+                                <button class="filter-btn-bet head-btn" data-filter="head3">3头</button>
+                                <button class="filter-btn-bet head-btn" data-filter="head4">4头</button>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <div class="filter-title">尾数</div>
+                            <div class="filter-buttons tail-buttons">
                                 <button class="filter-btn-bet tail-btn" data-filter="tail0">0尾</button>
                                 <button class="filter-btn-bet tail-btn" data-filter="tail1">1尾</button>
                                 <button class="filter-btn-bet tail-btn" data-filter="tail2">2尾</button>
@@ -344,6 +334,24 @@
                                 <button class="filter-btn-bet tail-btn" data-filter="tail7">7尾</button>
                                 <button class="filter-btn-bet tail-btn" data-filter="tail8">8尾</button>
                                 <button class="filter-btn-bet tail-btn" data-filter="tail9">9尾</button>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <div class="filter-title">生肖</div>
+                            <div class="filter-buttons">
+                                <button class="filter-btn-bet" data-zodiac="鼠">鼠</button>
+                                <button class="filter-btn-bet" data-zodiac="牛">牛</button>
+                                <button class="filter-btn-bet" data-zodiac="虎">虎</button>
+                                <button class="filter-btn-bet" data-zodiac="兔">兔</button>
+                                <button class="filter-btn-bet" data-zodiac="龙">龙</button>
+                                <button class="filter-btn-bet" data-zodiac="蛇">蛇</button>
+                                <button class="filter-btn-bet" data-zodiac="马">马</button>
+                                <button class="filter-btn-bet" data-zodiac="羊">羊</button>
+                                <button class="filter-btn-bet" data-zodiac="猴">猴</button>
+                                <button class="filter-btn-bet" data-zodiac="鸡">鸡</button>
+                                <button class="filter-btn-bet" data-zodiac="狗">狗</button>
+                                <button class="filter-btn-bet" data-zodiac="猪">猪</button>
                             </div>
                         </div>
                     </div>
