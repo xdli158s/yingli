@@ -10,11 +10,18 @@ export async function onRequest(context) {
         return new Response(null, { headers: corsHeaders });
     }
 
+    const normalizePeriod = (value) => {
+        const digits = String(value || '').replace(/\D/g, '');
+        if (!digits) return '';
+        return digits.length >= 7 ? digits.slice(0, 7) : digits;
+    };
+
     try {
         if (request.method === 'POST') {
             const body = await request.json();
             // Expected body: { period, drawNumbers, specialNumber, totalBets, totalBetAmount, winCount, totalPayout, profit }
             const totalBets = Number(body.totalBets || 0);
+            const period = normalizePeriod(body.period);
 
             if (totalBets <= 0) {
                 return new Response(JSON.stringify({ success: true, skipped: true, reason: 'no-orders' }), {
@@ -29,7 +36,7 @@ export async function onRequest(context) {
             `);
 
             await stmt.bind(
-                body.period,
+                period,
                 JSON.stringify(body.drawNumbers),
                 body.specialNumber,
                 totalBets,

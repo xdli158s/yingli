@@ -10,11 +10,17 @@ export async function onRequest(context) {
         return new Response(null, { headers: corsHeaders });
     }
 
+    const normalizePeriod = (value) => {
+        const digits = String(value || '').replace(/\D/g, '');
+        if (!digits) return '';
+        return digits.length >= 7 ? digits.slice(0, 7) : digits;
+    };
+
     try {
         if (request.method === 'GET') {
             const { results } = await env.DB.prepare('SELECT * FROM draw_history ORDER BY period DESC').all();
             const history = results.map(row => ({
-                period: row.period,
+                period: normalizePeriod(row.period),
                 drawNumbers: JSON.parse(row.draw_numbers),
                 specialNumber: row.special_number,
                 totalBets: row.total_bets,

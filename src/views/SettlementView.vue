@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import { API } from '../api'
-import { formatPeriodDisplay, showToast } from '../utils/common'
+import { formatPeriodDisplay, normalizePeriod, showToast } from '../utils/common'
 import PageHeader from '../components/PageHeader.vue'
 import AppCard from '../components/AppCard.vue'
 import StatCard from '../components/StatCard.vue'
@@ -14,7 +14,7 @@ const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000
 const DRAW_FETCH_INTERVAL_MS = 10000
 const HISTORY_OVERVIEW_KEY = '__history_overview__'
 
-const selectedPeriod = ref(store.currentPeriod)
+const selectedPeriod = ref(normalizePeriod(store.currentPeriod) || store.currentPeriod)
 const queryText = ref('')
 const listTab = ref('all')
 const nowMs = ref(Date.now())
@@ -23,12 +23,18 @@ const latestDraw = ref(null)
 const lastDrawFetchAt = ref(0)
 let timer = null
 
-const isCurrentPeriod = computed(() => selectedPeriod.value === store.currentPeriod)
-const isHistoryOverviewSelected = computed(() => selectedPeriod.value === HISTORY_OVERVIEW_KEY)
-const currentPeriodSettled = computed(() =>
-  store.drawHistory.some((item) => item.period === store.currentPeriod)
+const isCurrentPeriod = computed(() =>
+  (normalizePeriod(selectedPeriod.value) || selectedPeriod.value) === (normalizePeriod(store.currentPeriod) || store.currentPeriod)
 )
-const historyRecord = computed(() => store.drawHistory.find((item) => item.period === selectedPeriod.value))
+const isHistoryOverviewSelected = computed(() => selectedPeriod.value === HISTORY_OVERVIEW_KEY)
+const currentPeriodSettled = computed(() => {
+  const current = normalizePeriod(store.currentPeriod) || store.currentPeriod
+  return store.drawHistory.some((item) => (normalizePeriod(item.period) || item.period) === current)
+})
+const historyRecord = computed(() => {
+  const selected = normalizePeriod(selectedPeriod.value) || selectedPeriod.value
+  return store.drawHistory.find((item) => (normalizePeriod(item.period) || item.period) === selected)
+})
 const isSettled = computed(() => Boolean(historyRecord.value))
 
 const visibleBets = computed(() => {
@@ -151,12 +157,6 @@ const getTodayDrawWindow = (utcMs = Date.now()) => {
   const startUtcMs = Date.UTC(year, month, day, 21, 30, 0, 0) - BEIJING_OFFSET_MS
   const endUtcMs = Date.UTC(year, month, day, 21, 40, 0, 0) - BEIJING_OFFSET_MS
   return { startUtcMs, endUtcMs }
-}
-
-const normalizePeriod = (value) => {
-  const digits = String(value || '').replace(/\D/g, '')
-  if (!digits) return ''
-  return digits.length >= 7 ? digits.slice(0, 7) : digits
 }
 
 const formatCountdown = (ms) => {
@@ -309,8 +309,8 @@ onUnmounted(() => {
           <span>期数</span>
           <select v-model="selectedPeriod">
             <option :value="HISTORY_OVERVIEW_KEY">历史统计</option>
-            <option :value="store.currentPeriod">{{ formatPeriodDisplay(store.currentPeriod) }} (当前)</option>
-            <option v-for="item in store.drawHistory" :key="item.period" :value="item.period">
+            <option :value="normalizePeriod(store.currentPeriod) || store.currentPeriod">{{ formatPeriodDisplay(store.currentPeriod) }} (当前)</option>
+            <option v-for="item in store.drawHistory" :key="item.period" :value="normalizePeriod(item.period) || item.period">
               {{ formatPeriodDisplay(item.period) }}
             </option>
           </select>

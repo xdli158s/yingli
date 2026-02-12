@@ -1,5 +1,5 @@
 ﻿import { defineStore } from 'pinia'
-import { initNumberStats, calculateCurrentPeriod, generateOrderId, parseNumberInput } from '../utils/common'
+import { initNumberStats, calculateCurrentPeriod, generateOrderId, normalizePeriod, parseNumberInput } from '../utils/common'
 import { numberData, filterMap } from '../utils/constants'
 import { API } from '../api'
 
@@ -54,7 +54,7 @@ export const useAppStore = defineStore('app', {
     },
 
     setPeriod(period) {
-      this.currentPeriod = period
+      this.currentPeriod = normalizePeriod(period) || this.currentPeriod
     },
 
     togglePickerNumber(number) {
@@ -155,17 +155,28 @@ export const useAppStore = defineStore('app', {
 
     async hydrateFromServer() {
       try {
+        this.currentPeriod = normalizePeriod(this.currentPeriod) || calculateCurrentPeriod()
         const [history, bets] = await Promise.all([API.getHistory(), API.getBets(this.currentPeriod)])
 
         if (Array.isArray(history)) {
-          this.drawHistory = history.map((item) => ({
+          const normalized = history.map((item) => ({
             ...item,
+            period: normalizePeriod(item.period) || item.period,
             bets: Array.isArray(item.bets) ? item.bets : []
           }))
+          const byPeriod = new Map()
+          for (const item of normalized) {
+            if (!item.period) continue
+            if (!byPeriod.has(item.period)) byPeriod.set(item.period, item)
+          }
+          this.drawHistory = [...byPeriod.values()]
         }
 
         if (Array.isArray(bets)) {
-          this.bettingRecords = bets
+          this.bettingRecords = bets.map((item) => ({
+            ...item,
+            period: normalizePeriod(item.period) || item.period
+          }))
           this.updateMockDataWithBets()
         }
       } catch (error) {
@@ -175,11 +186,13 @@ export const useAppStore = defineStore('app', {
 
     async submitBet(betData) {
       try {
-        const res = await API.createBet(betData)
+        const period = normalizePeriod(betData?.period || this.currentPeriod) || this.currentPeriod
+        const res = await API.createBet({ ...betData, period })
         const order = {
           id: res && res.id ? Number(res.id) : undefined,
           ...betData,
-          orderId: generateOrderId(this.currentPeriod, res && res.id ? res.id : Math.floor(Date.now() % 10000)),
+          period,
+          orderId: generateOrderId(period, res && res.id ? res.id : Math.floor(Date.now() % 10000)),
           createTime: Date.now(),
           timestamp: new Date().toLocaleString('zh-CN')
         }
@@ -258,7 +271,7 @@ export const useAppStore = defineStore('app', {
       }
 
       const record = {
-        period: this.currentPeriod,
+        period: normalizePeriod(this.currentPeriod) || this.currentPeriod,
         drawNumbers,
         specialNumber,
         totalBets: this.bettingRecords.length,
@@ -279,7 +292,7 @@ export const useAppStore = defineStore('app', {
         }
       }
 
-      this.drawHistory = [record, ...this.drawHistory.filter((item) => item.period !== this.currentPeriod)]
+      this.drawHistory = [record, ...this.drawHistory.filter((item) => item.period !== record.period)]
       return record
     }
   }

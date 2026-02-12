@@ -14,12 +14,18 @@ export async function onRequest(context) {
         return new Response(null, { headers: corsHeaders });
     }
 
+    const normalizePeriod = (value) => {
+        const digits = String(value || '').replace(/\D/g, '');
+        if (!digits) return '';
+        return digits.length >= 7 ? digits.slice(0, 7) : digits;
+    };
+
     try {
         // GET /api/bets?period=...
         if (request.method === 'GET') {
-            const period = url.searchParams.get('period');
+            const period = normalizePeriod(url.searchParams.get('period'));
             let query = 'SELECT * FROM betting_records';
-            let params = [];
+            const params = [];
 
             if (period) {
                 query += ' WHERE period = ?';
@@ -27,13 +33,12 @@ export async function onRequest(context) {
             }
 
             query += ' ORDER BY created_at DESC';
-
             const { results } = await env.DB.prepare(query).bind(...params).all();
 
             const bets = results.map(bet => ({
                 id: bet.id,
-                orderId: `${String(bet.period || '').replace(/\D/g, '')}-${bet.id}`,
-                period: bet.period,
+                orderId: `${normalizePeriod(bet.period)}-${bet.id}`,
+                period: normalizePeriod(bet.period),
                 player: bet.player_name,  // DB: player_name -> API: player (or check frontend needs)
                 playerName: bet.player_name, // redundant but safe
                 type: bet.bet_type,
@@ -52,6 +57,7 @@ export async function onRequest(context) {
         // POST /api/bets
         if (request.method === 'POST') {
             const body = await request.json();
+            const period = normalizePeriod(body.period);
             // Expected body: { period, playerName, betType, betNumbers, betAmountPerNumber, totalAmount }
 
             const stmt = env.DB.prepare(`
@@ -61,7 +67,7 @@ export async function onRequest(context) {
             `);
 
             const info = await stmt.bind(
-                body.period,
+                period,
                 body.playerName,
                 body.betType,
                 JSON.stringify(body.betNumbers),
