@@ -245,30 +245,31 @@ onUnmounted(() => {
     <PageHeader title="开奖结算" subtitle="北京时间 21:30-21:40 自动开奖，按接口期数一致后结算" />
 
     <AppCard title="期数与开奖号码">
-      <div class="form-grid settlement">
-        <div class="settlement-compact-row full-row">
-          <label class="field">
-            <span>期数</span>
-            <select v-model="selectedPeriod">
-              <option :value="store.currentPeriod">{{ formatPeriodDisplay(store.currentPeriod) }} (当前)</option>
-              <option v-for="item in store.drawHistory" :key="item.period" :value="item.period">
-                {{ formatPeriodDisplay(item.period) }}
-              </option>
-            </select>
-          </label>
+      <template #actions>
+        <label class="settlement-period-picker">
+          <span>期数</span>
+          <select v-model="selectedPeriod">
+            <option :value="store.currentPeriod">{{ formatPeriodDisplay(store.currentPeriod) }} (当前)</option>
+            <option v-for="item in store.drawHistory" :key="item.period" :value="item.period">
+              {{ formatPeriodDisplay(item.period) }}
+            </option>
+          </select>
+        </label>
+      </template>
 
-          <div class="draw-display-panel">
-            <span class="draw-display-title">{{ isSettled ? '开奖号码' : '开奖倒计时' }}</span>
-            <div v-if="displayedDrawNumbers.length" class="chip-list draw-chip-list">
-              <NumberChip
-                v-for="(num, idx) in displayedDrawNumbers"
-                :key="`${num}-${idx}`"
-                :number="num"
-                size="lg"
-              />
-            </div>
-            <strong v-else class="draw-countdown">{{ countdownText }}</strong>
+      <div class="form-grid settlement">
+        <div class="draw-display-panel full-row">
+          <span class="draw-display-title">{{ isSettled ? '开奖号码' : '开奖倒计时' }}</span>
+          <div v-if="displayedDrawNumbers.length" class="chip-list draw-chip-list">
+            <NumberChip
+              v-for="(num, idx) in displayedDrawNumbers"
+              :key="`${num}-${idx}`"
+              :number="num"
+              size="lg"
+              show-zodiac
+            />
           </div>
+          <strong v-else class="draw-countdown">{{ countdownText }}</strong>
         </div>
       </div>
     </AppCard>

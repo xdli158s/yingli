@@ -972,11 +972,22 @@ select {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.settlement-compact-row {
-  display: grid;
-  grid-template-columns: minmax(260px, 380px) minmax(0, 1fr);
-  align-items: end;
-  gap: 16px;
+.settlement-period-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.settlement-period-picker select {
+  min-width: 260px;
+  max-width: 340px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  background: #fff;
+  color: var(--text);
 }
 
 .draw-display-panel {
@@ -1089,9 +1100,9 @@ select {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .settlement-compact-row {
-    grid-template-columns: 1fr;
-    align-items: stretch;
+  .settlement-period-picker select {
+    min-width: 220px;
+    max-width: 260px;
   }
 }
 
@@ -1157,6 +1168,17 @@ select {
   .form-grid,
   .form-grid.settlement {
     grid-template-columns: 1fr;
+  }
+
+  .settlement-period-picker {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .settlement-period-picker select {
+    min-width: 0;
+    width: 100%;
+    max-width: none;
   }
 
   .number-histogram {
