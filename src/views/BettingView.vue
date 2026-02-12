@@ -1,7 +1,7 @@
 ﻿<script setup>
 import { computed, ref } from 'vue'
 import { useAppStore } from '../stores/app'
-import { getNumberWaveColor, parseNumberInput } from '../utils/common'
+import { parseNumberInput } from '../utils/common'
 import PageHeader from '../components/PageHeader.vue'
 import AppCard from '../components/AppCard.vue'
 import NumberChip from '../components/NumberChip.vue'
@@ -176,10 +176,15 @@ const removeBet = (orderId) => {
           v-for="num in 49"
           :key="num"
           class="number-cell"
-          :class="[`wave-${getNumberWaveColor(num)}`, { active: store.pickerState.selectedNumbers.has(num) }]"
+          :class="{ active: store.pickerState.selectedNumbers.has(num) }"
           @click="toggleNumber(num)"
         >
-          {{ String(num).padStart(2, '0') }}
+          <NumberChip
+            :number="num"
+            size="md"
+            show-zodiac
+            :selected="store.pickerState.selectedNumbers.has(num)"
+          />
         </button>
       </div>
     </AppCard>
