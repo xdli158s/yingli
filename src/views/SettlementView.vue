@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import { API } from '../api'
-import { formatPeriodDisplay } from '../utils/common'
+import { formatPeriodDisplay, showToast } from '../utils/common'
 import PageHeader from '../components/PageHeader.vue'
 import AppCard from '../components/AppCard.vue'
 import StatCard from '../components/StatCard.vue'
@@ -215,6 +215,11 @@ const autoSettleIfNeeded = async () => {
   }
 }
 
+const updateOrderPlayer = async (payload) => {
+  const success = await store.updateOrderPlayer(payload)
+  showToast(success ? '玩家已更新' : '玩家更新失败', success ? 'success' : 'error')
+}
+
 watch(selectedPeriod, async () => {
   await loadBetsForSelectedPeriod()
 })
@@ -298,6 +303,7 @@ onUnmounted(() => {
         :rows="filteredBets"
         :settled="isSettled"
         empty-text="暂无数据"
+        @update-player="updateOrderPlayer"
       />
     </AppCard>
   </div>

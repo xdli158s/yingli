@@ -6,7 +6,7 @@ export async function onRequest(context) {
     // CORS headers
     const corsHeaders = {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, HEAD, POST, PATCH, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
     };
 
@@ -72,6 +72,35 @@ export async function onRequest(context) {
             return new Response(JSON.stringify({ success: true, id: info.meta.last_row_id }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 201
+            });
+        }
+
+        // PATCH /api/bets
+        if (request.method === 'PATCH') {
+            const body = await request.json();
+            const id = Number(body.id);
+            const playerName = String(body.playerName || '').trim();
+
+            if (!Number.isInteger(id) || id <= 0) {
+                return new Response(JSON.stringify({ error: 'Invalid id' }), {
+                    status: 400,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+            }
+
+            if (!playerName) {
+                return new Response(JSON.stringify({ error: 'playerName is required' }), {
+                    status: 400,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+            }
+
+            await env.DB.prepare('UPDATE betting_records SET player_name = ? WHERE id = ?')
+                .bind(playerName, id)
+                .run();
+
+            return new Response(JSON.stringify({ success: true, id, playerName }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
 

@@ -9,9 +9,10 @@ const props = defineProps({
   emptyText: { type: String, default: '暂无数据' }
 })
 
-const emit = defineEmits(['remove'])
+const emit = defineEmits(['remove', 'update-player'])
 
 const detailOrder = ref(null)
+const selectedPlayerName = ref('')
 
 const formatCurrency = (value) => {
   const amount = Number(value)
@@ -42,6 +43,7 @@ const modalTitle = computed(() => {
 
 const openDetail = (row) => {
   detailOrder.value = row
+  selectedPlayerName.value = row?.playerName || ''
 }
 
 const closeDetail = () => {
@@ -50,6 +52,39 @@ const closeDetail = () => {
 
 const onRemove = (orderId) => {
   emit('remove', orderId)
+}
+
+const playerOptions = computed(() => {
+  const map = new Map()
+  for (const row of props.rows || []) {
+    const name = String(row?.playerName || '').trim()
+    if (!name) continue
+    if (!map.has(name)) map.set(name, name)
+  }
+  return [...map.values()]
+})
+
+const confirmUpdatePlayer = () => {
+  if (!detailOrder.value) return
+  const nextName = String(selectedPlayerName.value || '').trim()
+  const currentName = String(detailOrder.value.playerName || '').trim()
+  if (!nextName || nextName === currentName) return
+
+  if (!confirm(`确认将玩家从“${currentName || '--'}”修改为“${nextName}”吗？`)) return
+
+  emit('update-player', {
+    orderId: detailOrder.value.orderId,
+    id: detailOrder.value.id,
+    playerName: nextName
+  })
+
+  detailOrder.value = { ...detailOrder.value, playerName: nextName }
+}
+
+const isWinningNumber = (row, number) => {
+  if (!props.settled || !row) return false
+  const wins = Array.isArray(row.winNumbers) ? row.winNumbers : []
+  return wins.includes(Number(number))
 }
 </script>
 
@@ -109,7 +144,18 @@ const onRemove = (orderId) => {
 
       <div class="order-detail-grid">
         <p><span>订单号</span><strong>{{ detailOrder.orderId || '--' }}</strong></p>
-        <p><span>玩家</span><strong>{{ detailOrder.playerName || '--' }}</strong></p>
+        <p>
+          <span>玩家</span>
+          <span class="detail-player-edit">
+            <select v-model="selectedPlayerName">
+              <option v-if="detailOrder.playerName && !playerOptions.includes(detailOrder.playerName)" :value="detailOrder.playerName">
+                {{ detailOrder.playerName }}
+              </option>
+              <option v-for="name in playerOptions" :key="name" :value="name">{{ name }}</option>
+            </select>
+            <button class="btn-ghost detail-player-btn" @click="confirmUpdatePlayer">修改</button>
+          </span>
+        </p>
         <p><span>玩法</span><strong>{{ detailOrder.betType || '--' }}</strong></p>
         <p><span>单注</span><strong>{{ formatCurrency(detailOrder.betAmountPerNumber || 0) }}</strong></p>
         <p><span>投注额</span><strong>{{ formatCurrency(detailOrder.totalAmount || 0) }}</strong></p>
@@ -121,7 +167,18 @@ const onRemove = (orderId) => {
       <div class="order-detail-numbers">
         <p>投注号码</p>
         <div class="chip-list">
-          <NumberChip v-for="num in detailOrder.betNumbers || []" :key="`detail-${detailOrder.orderId}-${num}`" :number="num" size="sm" />
+          <span
+            v-for="(num, idx) in detailOrder.betNumbers || []"
+            :key="`detail-${detailOrder.orderId}-${num}-${idx}`"
+            class="detail-chip-wrap"
+          >
+            <NumberChip
+              :number="num"
+              size="sm"
+              :selected="isWinningNumber(detailOrder, num)"
+            />
+            <em v-if="isWinningNumber(detailOrder, num)" class="detail-win-tag">中</em>
+          </span>
         </div>
       </div>
     </div>

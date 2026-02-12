@@ -27,6 +27,20 @@ export const API = {
             throw e;
         }
     },
+    async updateBetPlayer(data) {
+        try {
+            const res = await fetch('/api/bets', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) throw new Error('Failed to update player');
+            return await res.json();
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    },
     async getHistory() {
         try {
             const res = await fetch('/api/history');

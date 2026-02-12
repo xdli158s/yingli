@@ -710,6 +710,29 @@ select {
   font-size: 14px;
 }
 
+.detail-player-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.detail-player-edit select {
+  min-width: 140px;
+  max-width: 220px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.detail-player-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
 .order-detail-numbers {
   margin-top: 12px;
 }
@@ -718,6 +741,29 @@ select {
   font-size: 12px;
   color: var(--muted);
   margin-bottom: 8px;
+}
+
+.detail-chip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.detail-win-tag {
+  position: absolute;
+  top: -6px;
+  right: -5px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  border: 1px solid #fff;
+  font-size: 10px;
+  line-height: 14px;
+  text-align: center;
+  font-style: normal;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.28);
 }
 
 .badge {

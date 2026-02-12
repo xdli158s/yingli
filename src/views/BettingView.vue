@@ -1,7 +1,7 @@
 ﻿<script setup>
 import { computed, ref } from 'vue'
 import { useAppStore } from '../stores/app'
-import { parseNumberInput } from '../utils/common'
+import { parseNumberInput, showToast } from '../utils/common'
 import PageHeader from '../components/PageHeader.vue'
 import AppCard from '../components/AppCard.vue'
 import NumberChip from '../components/NumberChip.vue'
@@ -148,6 +148,7 @@ const submitBet = async () => {
     return
   }
 
+  showToast('投注成功', 'success')
   store.resetPickerState()
   playerName.value = ''
 }
@@ -155,6 +156,11 @@ const submitBet = async () => {
 const removeBet = (orderId) => {
   if (!confirm('确认删除该条记录吗？')) return
   store.deleteBet(orderId)
+}
+
+const updateOrderPlayer = async (payload) => {
+  const success = await store.updateOrderPlayer(payload)
+  showToast(success ? '玩家已更新' : '玩家更新失败', success ? 'success' : 'error')
 }
 </script>
 
@@ -267,6 +273,7 @@ const removeBet = (orderId) => {
         show-action
         empty-text="暂无投注记录"
         @remove="removeBet"
+        @update-player="updateOrderPlayer"
       />
     </AppCard>
   </div>

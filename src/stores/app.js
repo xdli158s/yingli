@@ -177,6 +177,7 @@ export const useAppStore = defineStore('app', {
       try {
         const res = await API.createBet(betData)
         const order = {
+          id: res && res.id ? Number(res.id) : undefined,
           ...betData,
           orderId: generateOrderId(this.currentPeriod, res && res.id ? res.id : Math.floor(Date.now() % 10000)),
           createTime: Date.now(),
@@ -195,6 +196,39 @@ export const useAppStore = defineStore('app', {
     deleteBet(orderId) {
       this.bettingRecords = this.bettingRecords.filter((record) => record.orderId !== orderId)
       this.updateMockDataWithBets()
+    },
+
+    async updateOrderPlayer(payload) {
+      const orderId = payload?.orderId
+      const playerName = String(payload?.playerName || '').trim()
+      const explicitId = Number(payload?.id)
+      const parsedId = Number(String(orderId || '').split('-').pop())
+      const id = Number.isInteger(explicitId) && explicitId > 0 ? explicitId : parsedId
+
+      if (!Number.isInteger(id) || id <= 0 || !playerName) return false
+
+      try {
+        await API.updateBetPlayer({ id, playerName })
+      } catch (error) {
+        console.error('Update player API failed', error)
+        return false
+      }
+
+      for (const record of this.bettingRecords) {
+        if (record.orderId === orderId || Number(record.id) === id) {
+          record.playerName = playerName
+        }
+      }
+
+      for (const history of this.drawHistory) {
+        for (const record of history.bets || []) {
+          if (record.orderId === orderId || Number(record.id) === id) {
+            record.playerName = playerName
+          }
+        }
+      }
+
+      return true
     },
 
     async settleCurrentPeriod(drawNumbers) {
