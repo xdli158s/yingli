@@ -237,10 +237,12 @@ export const useAppStore = defineStore('app', {
         bets
       }
 
-      try {
-        await API.settle(record)
-      } catch (error) {
-        console.error('Settlement API failed', error)
+      if (record.totalBets > 0) {
+        try {
+          await API.settle(record)
+        } catch (error) {
+          console.error('Settlement API failed', error)
+        }
       }
 
       this.drawHistory = [record, ...this.drawHistory.filter((item) => item.period !== this.currentPeriod)]

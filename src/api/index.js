@@ -37,6 +37,16 @@ export const API = {
             return [];
         }
     },
+    async getLatestDraw() {
+        try {
+            const res = await fetch('/api/latest-draw');
+            if (!res.ok) throw new Error('Failed to fetch latest draw');
+            return await res.json();
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    },
     async settle(data) {
         try {
             const res = await fetch('/api/settle', {

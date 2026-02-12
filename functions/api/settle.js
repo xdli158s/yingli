@@ -14,6 +14,13 @@ export async function onRequest(context) {
         if (request.method === 'POST') {
             const body = await request.json();
             // Expected body: { period, drawNumbers, specialNumber, totalBets, totalBetAmount, winCount, totalPayout, profit }
+            const totalBets = Number(body.totalBets || 0);
+
+            if (totalBets <= 0) {
+                return new Response(JSON.stringify({ success: true, skipped: true, reason: 'no-orders' }), {
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+            }
 
             const stmt = env.DB.prepare(`
                 INSERT OR REPLACE INTO draw_history 
@@ -25,7 +32,7 @@ export async function onRequest(context) {
                 body.period,
                 JSON.stringify(body.drawNumbers),
                 body.specialNumber,
-                body.totalBets,
+                totalBets,
                 body.totalBetAmount,
                 body.winCount,
                 body.totalPayout,
