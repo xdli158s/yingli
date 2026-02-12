@@ -1,6 +1,6 @@
 ﻿<script setup>
 import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useAppStore } from './stores/app'
 
 const store = useAppStore()
@@ -15,6 +15,10 @@ const navItems = [
 const pageTitle = computed(() => {
   const current = navItems.find((item) => item.to === route.path)
   return current ? current.name : '控制台'
+})
+
+onMounted(async () => {
+  await store.hydrateFromServer()
 })
 </script>
 

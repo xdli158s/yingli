@@ -153,6 +153,26 @@ export const useAppStore = defineStore('app', {
       this.recalculateSelectedNumbers()
     },
 
+    async hydrateFromServer() {
+      try {
+        const [history, bets] = await Promise.all([API.getHistory(), API.getBets(this.currentPeriod)])
+
+        if (Array.isArray(history)) {
+          this.drawHistory = history.map((item) => ({
+            ...item,
+            bets: Array.isArray(item.bets) ? item.bets : []
+          }))
+        }
+
+        if (Array.isArray(bets)) {
+          this.bettingRecords = bets
+          this.updateMockDataWithBets()
+        }
+      } catch (error) {
+        console.error('Hydrate from API failed', error)
+      }
+    },
+
     async submitBet(betData) {
       try {
         const res = await API.createBet(betData)

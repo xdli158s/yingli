@@ -32,6 +32,7 @@ export async function onRequest(context) {
 
             const bets = results.map(bet => ({
                 id: bet.id,
+                orderId: `${String(bet.period || '').replace(/\D/g, '')}-${bet.id}`,
                 period: bet.period,
                 player: bet.player_name,  // DB: player_name -> API: player (or check frontend needs)
                 playerName: bet.player_name, // redundant but safe

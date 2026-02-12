@@ -1,6 +1,7 @@
 ﻿<script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useAppStore } from '../stores/app'
+import { API } from '../api'
 import { formatPeriodDisplay } from '../utils/common'
 import PageHeader from '../components/PageHeader.vue'
 import AppCard from '../components/AppCard.vue'
@@ -73,6 +74,42 @@ const displayedDrawNumbers = computed(() => {
   return []
 })
 
+const attachPeriodBets = (period, bets) => {
+  store.drawHistory = store.drawHistory.map((item) =>
+    item.period === period ? { ...item, bets } : item
+  )
+}
+
+const enrichSettledBets = (rows, specialNumber) => {
+  const special = Number(specialNumber)
+  return rows.map((record) => {
+    const betNumbers = Array.isArray(record.betNumbers) ? record.betNumbers : []
+    const amountPerNumber = Number(record.betAmountPerNumber || 0)
+    const winNumbers = Number.isInteger(special)
+      ? betNumbers.filter((number) => Number(number) === special)
+      : []
+    const payout = winNumbers.length * amountPerNumber * 47
+    return {
+      ...record,
+      winNumbers,
+      hasWin: payout > 0,
+      payout,
+      odds: 47,
+      profit: (record.totalAmount || 0) - payout
+    }
+  })
+}
+
+const loadBetsForSelectedPeriod = async () => {
+  if (!isSettled.value || !historyRecord.value) return
+  if (Array.isArray(historyRecord.value.bets) && historyRecord.value.bets.length > 0) return
+
+  const rows = await API.getBets(selectedPeriod.value)
+  if (!Array.isArray(rows)) return
+  const bets = enrichSettledBets(rows, historyRecord.value.specialNumber)
+  attachPeriodBets(selectedPeriod.value, bets)
+}
+
 const settleCurrentPeriod = async () => {
   if (!isCurrentPeriod.value) return
 
@@ -94,19 +131,22 @@ const settleCurrentPeriod = async () => {
   await store.settleCurrentPeriod(drawNumbers)
 }
 
-const clearHistory = () => {
-  if (!confirm('确认清空历史记录吗？')) return
-  store.drawHistory = []
-}
+watch(selectedPeriod, async () => {
+  await loadBetsForSelectedPeriod()
+})
+
+watch(historyRecord, async () => {
+  await loadBetsForSelectedPeriod()
+})
+
+onMounted(async () => {
+  await loadBetsForSelectedPeriod()
+})
 </script>
 
 <template>
   <div class="view-stack">
-    <PageHeader title="开奖结算" subtitle="录入开奖号码，完成当期输赢结算">
-      <template #actions>
-        <button class="btn-danger" @click="clearHistory">清空历史</button>
-      </template>
-    </PageHeader>
+    <PageHeader title="开奖结算" subtitle="录入开奖号码，完成当期输赢结算" />
 
     <AppCard title="期数与开奖号码">
       <div class="form-grid settlement">
@@ -152,8 +192,8 @@ const clearHistory = () => {
     <section class="stats-grid">
       <StatCard label="订单数" :value="summary.count" />
       <StatCard label="投注总额" :value="`¥${summary.bet.toFixed(2)}`" />
-      <StatCard label="赔付总额" :value="`¥${summary.payout.toFixed(2)}`" tone="warn" />
-      <StatCard label="盈亏" :value="`¥${summary.profit.toFixed(2)}`" :tone="summary.profit >= 0 ? 'positive' : 'danger'" />
+      <StatCard label="赔付额" :value="isSettled ? `¥${summary.payout.toFixed(2)}` : '---'" tone="warn" />
+      <StatCard label="盈亏额" :value="isSettled ? `¥${summary.profit.toFixed(2)}` : '---'" :tone="summary.profit >= 0 ? 'positive' : 'danger'" />
     </section>
 
     <AppCard title="订单列表" subtitle="支持按玩家/订单号搜索">

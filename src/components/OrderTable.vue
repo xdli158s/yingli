@@ -65,7 +65,7 @@ const onRemove = (orderId) => {
           <th>单注</th>
           <th>投注额</th>
           <th>赔付</th>
-          <th>盈亏</th>
+          <th>盈亏额</th>
           <th v-if="showAction">操作</th>
         </tr>
       </thead>
@@ -114,7 +114,7 @@ const onRemove = (orderId) => {
         <p><span>单注</span><strong>{{ formatCurrency(detailOrder.betAmountPerNumber || 0) }}</strong></p>
         <p><span>投注额</span><strong>{{ formatCurrency(detailOrder.totalAmount || 0) }}</strong></p>
         <p><span>赔付</span><strong>{{ displayPayout(detailOrder) }}</strong></p>
-        <p><span>盈亏</span><strong :class="profitClass(detailOrder)">{{ displayProfit(detailOrder) }}</strong></p>
+        <p><span>盈亏额</span><strong :class="profitClass(detailOrder)">{{ displayProfit(detailOrder) }}</strong></p>
         <p><span>时间</span><strong>{{ detailOrder.timestamp || detailOrder.drawTime || '--' }}</strong></p>
       </div>
 
