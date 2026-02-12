@@ -28,8 +28,13 @@ const riskDistribution = computed(() => {
   return base
 })
 
-const maxAmount = computed(() => Math.max(...riskRows.value.map((item) => item.amount), 1))
-const histogramRows = computed(() => riskRows.value.slice(0, 20))
+const maxAmount = computed(() => Math.max(...store.mockData.map((item) => item.amount), 1))
+const histogramRows = computed(() => {
+  const rows = [...store.mockData]
+  if (riskSort.value === 'amount') return rows.sort((a, b) => b.amount - a.amount)
+  return rows.sort((a, b) => a.number - b.number)
+})
+const getBarHeight = (amount) => (amount > 0 ? Math.max((amount / maxAmount.value) * 100, 8) : 0)
 
 const sumByNumbers = (numbers) =>
   store.mockData.reduce((sum, item) => (numbers.includes(item.number) ? sum + item.amount : sum), 0)
@@ -123,18 +128,19 @@ onMounted(() => {
 
     <AppCard title="风险分布">
       <template #actions>
-        <select v-model="riskSort" class="sort-select">
-          <option value="amount">金额排序</option>
-          <option value="number">号码排序</option>
-        </select>
+        <div class="risk-actions">
+          <select v-model="riskSort" class="sort-select">
+            <option value="amount">金额排序</option>
+            <option value="number">号码排序</option>
+          </select>
+          <div class="risk-badges compact">
+            <span class="badge high">高风险 {{ riskDistribution.high }}</span>
+            <span class="badge medium">中风险 {{ riskDistribution.medium }}</span>
+            <span class="badge low">低风险 {{ riskDistribution.low }}</span>
+            <span class="badge none">无投注 {{ riskDistribution.none }}</span>
+          </div>
+        </div>
       </template>
-
-      <div class="risk-badges">
-        <span class="badge high">高风险 {{ riskDistribution.high }}</span>
-        <span class="badge medium">中风险 {{ riskDistribution.medium }}</span>
-        <span class="badge low">低风险 {{ riskDistribution.low }}</span>
-        <span class="badge none">无投注 {{ riskDistribution.none }}</span>
-      </div>
 
       <div class="bar-list" v-if="riskRows.length">
         <article v-for="item in riskRows.slice(0, 20)" :key="item.number" class="bar-item">
@@ -152,7 +158,12 @@ onMounted(() => {
       <div v-if="histogramRows.length" class="number-histogram">
         <article v-for="item in histogramRows" :key="`hist-${item.number}`" class="hist-col">
           <div class="hist-bar-box">
-            <span class="hist-fill" :style="{ height: `${Math.max((item.amount / maxAmount) * 100, 6)}%` }"></span>
+            <p class="hist-value" :style="{ bottom: `calc(${getBarHeight(item.amount)}% + 4px)` }">¥{{ item.amount.toFixed(2) }}</p>
+            <span
+              class="hist-fill"
+              :class="`risk-${item.riskLevel}`"
+              :style="{ height: `${getBarHeight(item.amount)}%` }"
+            ></span>
           </div>
           <NumberChip :number="item.number" size="sm" show-zodiac :title="`¥${item.amount.toFixed(2)}`" />
         </article>
