@@ -756,39 +756,38 @@ select {
 }
 
 .number-histogram {
-  display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 10px;
-  align-items: end;
+  display: flex;
+  gap: 0;
+  align-items: flex-end;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
 }
 
 .hist-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  width: 44px;
+  flex: 0 0 44px;
+  padding: 10px 2px 0;
 }
 
-.hist-track {
+.hist-bar-box {
   width: 100%;
-  height: 120px;
-  border-radius: 8px;
-  background: #eef3f9;
-  position: relative;
-  overflow: hidden;
+  height: 124px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-bottom: 2px solid #9fb2cc;
 }
 
 .hist-fill {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, #22c55e 0%, #0f766e 100%);
-}
-
-.hist-amount {
-  font-size: 11px;
-  color: var(--muted);
+  width: 10px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(180deg, #34d399 0%, #0f766e 100%);
 }
 
 .analysis-grid {
@@ -957,7 +956,7 @@ select {
   }
 
   .number-histogram {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 0;
   }
 
   .number-grid {
@@ -1035,7 +1034,7 @@ select {
   }
 
   .number-histogram {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
   }
 
   .order-detail-grid {

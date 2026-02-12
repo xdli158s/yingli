@@ -151,11 +151,10 @@ onMounted(() => {
       <h3 v-if="histogramRows.length" class="risk-extra-title">号码柱状图</h3>
       <div v-if="histogramRows.length" class="number-histogram">
         <article v-for="item in histogramRows" :key="`hist-${item.number}`" class="hist-col">
-          <div class="hist-track">
-            <span class="hist-fill" :style="{ height: `${(item.amount / maxAmount) * 100}%` }"></span>
+          <div class="hist-bar-box">
+            <span class="hist-fill" :style="{ height: `${Math.max((item.amount / maxAmount) * 100, 6)}%` }"></span>
           </div>
-          <p class="hist-amount">¥{{ item.amount.toFixed(2) }}</p>
-          <NumberChip :number="item.number" size="sm" show-zodiac />
+          <NumberChip :number="item.number" size="sm" show-zodiac :title="`¥${item.amount.toFixed(2)}`" />
         </article>
       </div>
       <p v-else class="empty-tip">暂无投注数据</p>
