@@ -769,9 +769,10 @@ select {
 
 .number-histogram {
   display: flex;
-  gap: 0;
+  gap: 2px;
   align-items: flex-end;
   overflow-x: auto;
+  padding-top: 14px;
   padding-bottom: 2px;
   border-radius: 10px;
   background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
@@ -784,7 +785,7 @@ select {
   gap: 3px;
   width: 36px;
   flex: 0 0 36px;
-  padding: 8px 0 0;
+  padding: 0;
 }
 
 .hist-bar-box {
@@ -798,9 +799,12 @@ select {
 }
 
 .hist-fill {
-  width: 12px;
+  width: 100%;
+  max-width: 100%;
   border-radius: 6px 6px 0 0;
   background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+  position: relative;
+  z-index: 1;
 }
 
 .hist-fill.risk-high {
@@ -827,6 +831,7 @@ select {
   color: var(--muted);
   line-height: 1;
   white-space: nowrap;
+  z-index: 2;
 }
 
 .number-histogram .number-chip.chip-sm {
