@@ -5,6 +5,7 @@ import { parseNumberInput } from '../utils/common'
 import PageHeader from '../components/PageHeader.vue'
 import AppCard from '../components/AppCard.vue'
 import NumberChip from '../components/NumberChip.vue'
+import OrderTable from '../components/OrderTable.vue'
 
 const store = useAppStore()
 
@@ -190,43 +191,13 @@ const removeBet = (orderId) => {
     </AppCard>
 
     <AppCard title="当期订单" :subtitle="`共 ${store.bettingRecords.length} 笔，投注 ¥${totalRecordAmount.toFixed(2)}`">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>订单号</th>
-              <th>玩家</th>
-              <th>号码</th>
-              <th>金额</th>
-              <th>时间</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="record in store.bettingRecords" :key="record.orderId">
-              <td>{{ record.orderId }}</td>
-              <td>{{ record.playerName }}</td>
-              <td>
-                <div class="chip-list compact">
-                  <NumberChip
-                    v-for="number in record.betNumbers.slice(0, 6)"
-                    :key="`${record.orderId}-${number}`"
-                    :number="number"
-                    size="sm"
-                  />
-                  <span v-if="record.betNumbers.length > 6" class="more-chip">+{{ record.betNumbers.length - 6 }}</span>
-                </div>
-              </td>
-              <td>¥{{ (record.totalAmount || 0).toFixed(2) }}</td>
-              <td>{{ record.timestamp }}</td>
-              <td><button class="btn-danger" @click="removeBet(record.orderId)">删除</button></td>
-            </tr>
-            <tr v-if="store.bettingRecords.length === 0">
-              <td colspan="6" class="empty-row">暂无投注记录</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <OrderTable
+        :rows="store.bettingRecords"
+        :settled="false"
+        show-action
+        empty-text="暂无投注记录"
+        @remove="removeBet"
+      />
     </AppCard>
   </div>
 </template>

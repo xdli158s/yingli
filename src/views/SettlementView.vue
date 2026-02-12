@@ -6,6 +6,7 @@ import PageHeader from '../components/PageHeader.vue'
 import AppCard from '../components/AppCard.vue'
 import StatCard from '../components/StatCard.vue'
 import NumberChip from '../components/NumberChip.vue'
+import OrderTable from '../components/OrderTable.vue'
 
 const store = useAppStore()
 
@@ -156,43 +157,11 @@ const clearHistory = () => {
         <input v-model="queryText" type="text" placeholder="搜索订单号或玩家" />
       </div>
 
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>订单号</th>
-              <th>玩家</th>
-              <th>号码</th>
-              <th>投注</th>
-              <th>赔付</th>
-              <th>盈亏</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="bet in filteredBets" :key="bet.orderId">
-              <td>{{ bet.orderId }}</td>
-              <td>{{ bet.playerName }}</td>
-              <td>
-                <div class="chip-list compact">
-                  <NumberChip
-                    v-for="num in bet.betNumbers.slice(0, 6)"
-                    :key="`${bet.orderId}-${num}`"
-                    :number="num"
-                    size="sm"
-                  />
-                  <span v-if="bet.betNumbers.length > 6" class="more-chip">+{{ bet.betNumbers.length - 6 }}</span>
-                </div>
-              </td>
-              <td>¥{{ (bet.totalAmount || 0).toFixed(2) }}</td>
-              <td>¥{{ (bet.payout || 0).toFixed(2) }}</td>
-              <td :class="(bet.profit || 0) >= 0 ? 'profit' : 'loss'">¥{{ (bet.profit || 0).toFixed(2) }}</td>
-            </tr>
-            <tr v-if="filteredBets.length === 0">
-              <td colspan="6" class="empty-row">暂无数据</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <OrderTable
+        :rows="filteredBets"
+        :settled="isSettled"
+        empty-text="暂无数据"
+      />
     </AppCard>
   </div>
 </template>
