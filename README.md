@@ -1,74 +1,48 @@
-# yingli管理系统
+# 庄家管理系统 (Vite + Vue 3 + Cloudflare Pages)
 
-基于 Cloudflare Pages + Workers + D1 的管理后台系统
+Based on the legacy Betting Management System, upgraded to a modern stack.
 
-## 🎯 快速开始
+## Tech Stack
+-   **Frontend**: Vue 3, Pinia (Store), Vue Router, Vite.
+-   **Backend**: Cloudflare Pages Functions (Serverless).
+-   **Styling**: Native CSS (Ported from legacy).
 
-**直接打开 `public/index.html` 查看完整效果！**
+## Project Structure
+-   `src/`: Frontend source code.
+    -   `api/`: API client.
+    -   `assets/`: Static assets (CSS).
+    -   `components/`: Vue components (currently mainly Views).
+    -   `router/`: Routing configuration.
+    -   `stores/`: Global state (Pinia).
+    -   `utils/`: Helper functions and constants.
+    -   `views/`: Page views (Analysis, Betting, Settlement).
+-   `functions/`: Backend API (Cloudflare Pages Functions).
+-   `public/`: Static files.
 
+## Setup & Development
 
-## 📁 文件结构
+1.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
 
-```
-public/
-├── index.html          # 主页面
-├── app.js             # 应用逻辑（模拟数据）
-└── style.css          # 样式文件
+2.  **Run Development Server** (Frontend + Backend APIs)
+    ```bash
+    npm run dev:pages
+    ```
+    This starts the Wrangler proxy on port 8788 (backend) and Vite on port 5173 (frontend). Access the app at `http://localhost:8788`.
 
-functions/api/
-└── [[route]].js       # Cloudflare Workers API（生产环境）
+3.  **Run Frontend Only** (No API Mocking)
+    ```bash
+    npm run dev
+    ```
 
-migrations/
-└── 0001_init.sql      # 数据库初始化（生产环境）
-```
+## Deployment
 
-## 🚀 使用说明
+This project is configured for **Cloudflare Pages**.
 
-### 查看演示
-1. 打开 `public/index.html`
-2. 点击侧边栏切换不同页面
-3. 在热力图中点击号码查看详情
-4. 切换柱状图显示投注额/赔付额
-5. 使用筛选按钮查看不同风险等级的号码
+-   **Build Command**: `npm run build`
+-   **Build Output Directory**: `dist`
+-   **Root Directory**: `/` (current directory)
 
-### 部署到 Cloudflare
-
-#### 1. 安装依赖
-```bash
-npm install
-```
-
-#### 2. 创建 D1 数据库
-```bash
-npm run db:create
-```
-
-#### 3. 运行数据库迁移
-```bash
-npm run db:migrate
-```
-
-#### 4. 本地开发
-```bash
-npm run dev
-```
-
-#### 5. 部署到生产环境
-```bash
-npm run db:migrate:prod
-npm run deploy
-```
-
-## 💡 技术栈
-
-- **前端**：原生 HTML/CSS/JavaScript
-- **后端**：Cloudflare Workers
-- **数据库**：Cloudflare D1 (SQLite)
-- **框架**：Hono.js
-- **部署**：Cloudflare Pages
-
-## 📊 免费额度
-
-- D1: 每天 100,000 次读取 + 50,000 次写入
-- Workers: 每天 100,000 次请求
-- Pages: 无限带宽
+The `functions/` directory is automatically detected by Cloudflare Pages to provide backend API routes.
