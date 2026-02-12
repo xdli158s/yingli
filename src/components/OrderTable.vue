@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { computed, ref } from 'vue'
 import NumberChip from './NumberChip.vue'
 
@@ -15,12 +15,14 @@ const detailOrder = ref(null)
 
 const formatCurrency = (value) => {
   const amount = Number(value)
-  return Number.isFinite(amount) ? `¥${amount.toFixed(2)}` : '---'
+  return Number.isFinite(amount) ? `￥${amount.toFixed(2)}` : '---'
 }
 
 const displayPayout = (row) => {
   if (!props.settled) return '---'
-  return formatCurrency(row.payout || 0)
+  const payout = Number(row.payout || 0)
+  if (payout > 0) return `中奖￥${payout.toFixed(2)}`
+  return '未中奖￥0.00'
 }
 
 const displayProfit = (row) => {
@@ -125,3 +127,4 @@ const onRemove = (orderId) => {
     </div>
   </div>
 </template>
+

@@ -25,7 +25,7 @@ const visibleBets = computed(() => {
   return []
 })
 
-const filteredBets = computed(() => {
+const searchedBets = computed(() => {
   let rows = [...visibleBets.value]
 
   if (queryText.value.trim()) {
@@ -36,6 +36,18 @@ const filteredBets = computed(() => {
         (item.playerName && item.playerName.toLowerCase().includes(keyword))
     )
   }
+
+  return rows
+})
+
+const tabCounts = computed(() => ({
+  all: searchedBets.value.length,
+  win: searchedBets.value.filter((item) => (item.payout || 0) > 0).length,
+  lose: searchedBets.value.filter((item) => (item.payout || 0) === 0).length
+}))
+
+const filteredBets = computed(() => {
+  let rows = [...searchedBets.value]
 
   if (listTab.value === 'win') rows = rows.filter((item) => (item.payout || 0) > 0)
   if (listTab.value === 'lose') rows = rows.filter((item) => (item.payout || 0) === 0)
@@ -147,9 +159,9 @@ const clearHistory = () => {
     <AppCard title="订单列表" subtitle="支持按玩家/订单号搜索">
       <template #actions>
         <div class="inline-actions">
-          <button class="btn-ghost" :class="{ active: listTab === 'all' }" @click="listTab = 'all'">全部</button>
-          <button class="btn-ghost" :class="{ active: listTab === 'win' }" @click="listTab = 'win'">中奖</button>
-          <button class="btn-ghost" :class="{ active: listTab === 'lose' }" @click="listTab = 'lose'">未中</button>
+          <button class="btn-ghost" :class="{ active: listTab === 'all' }" @click="listTab = 'all'">全部 {{ tabCounts.all }}</button>
+          <button class="btn-ghost" :class="{ active: listTab === 'win' }" @click="listTab = 'win'">中奖 {{ tabCounts.win }}</button>
+          <button class="btn-ghost" :class="{ active: listTab === 'lose' }" @click="listTab = 'lose'">未中奖 {{ tabCounts.lose }}</button>
         </div>
       </template>
 
