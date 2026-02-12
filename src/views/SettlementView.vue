@@ -67,36 +67,55 @@ const filteredBets = computed(() => {
   return rows
 })
 
+const toSafeNumber = (value) => {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : 0
+}
+
+const hasFiniteNumber = (value) => Number.isFinite(Number(value))
+
+const deriveStatsFromBets = (bets = []) => {
+  const rows = Array.isArray(bets) ? bets : []
+  const bet = rows.reduce((sum, item) => sum + toSafeNumber(item.totalAmount), 0)
+  const payout = rows.reduce((sum, item) => sum + toSafeNumber(item.payout), 0)
+  return {
+    count: rows.length,
+    bet,
+    payout,
+    profit: bet - payout
+  }
+}
+
+const deriveStatsFromHistoryItem = (item) => {
+  const bets = Array.isArray(item?.bets) ? item.bets : []
+  const countByField = toSafeNumber(item?.totalBets)
+  const betByField = toSafeNumber(item?.totalBetAmount)
+  const payoutByField = toSafeNumber(item?.totalPayout)
+  const profitByField = toSafeNumber(item?.profit)
+  const hasCountByField = hasFiniteNumber(item?.totalBets)
+  const hasBetByField = hasFiniteNumber(item?.totalBetAmount)
+  const hasPayoutByField = hasFiniteNumber(item?.totalPayout)
+  const hasProfitByField = hasFiniteNumber(item?.profit)
+  const fallback = deriveStatsFromBets(bets)
+
+  return {
+    period: item?.period,
+    count: hasCountByField ? countByField : fallback.count,
+    bet: hasBetByField ? betByField : fallback.bet,
+    payout: hasPayoutByField ? payoutByField : fallback.payout,
+    profit: (hasBetByField && hasPayoutByField) ? (betByField - payoutByField) : (hasProfitByField ? profitByField : fallback.profit)
+  }
+}
+
 const summary = computed(() => {
   if (isHistoryOverviewSelected.value) return historyOverviewSummary.value
 
-  const rows = filteredBets.value
-  const totalBet = rows.reduce((sum, item) => sum + (item.totalAmount || 0), 0)
-  const totalPayout = rows.reduce((sum, item) => sum + (item.payout || 0), 0)
-  return {
-    count: rows.length,
-    bet: totalBet,
-    payout: totalPayout,
-    profit: totalBet - totalPayout,
-    wins: rows.filter((item) => (item.payout || 0) > 0).length
-  }
+  if (isSettled.value && historyRecord.value) return deriveStatsFromHistoryItem(historyRecord.value)
+  return deriveStatsFromBets(visibleBets.value)
 })
 
 const historyPeriodStats = computed(() =>
-  store.drawHistory.map((item) => {
-    const bets = Array.isArray(item.bets) ? item.bets : []
-    const count = Number(item.totalBets || 0) || bets.length
-    const bet = Number(item.totalBetAmount || 0) || bets.reduce((sum, row) => sum + Number(row.totalAmount || 0), 0)
-    const payout = Number(item.totalPayout || 0) || bets.reduce((sum, row) => sum + Number(row.payout || 0), 0)
-    const profit = Number(item.profit || 0) || (bet - payout)
-    return {
-      period: item.period,
-      count,
-      bet,
-      payout,
-      profit
-    }
-  })
+  store.drawHistory.map((item) => deriveStatsFromHistoryItem(item))
 )
 
 const historyOverviewSummary = computed(() => ({
