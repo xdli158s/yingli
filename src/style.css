@@ -629,6 +629,15 @@ select {
   background: #f8fbff;
 }
 
+.period-row {
+  cursor: pointer;
+}
+
+.period-row:hover .period-jump {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
 .order-row {
   cursor: pointer;
 }

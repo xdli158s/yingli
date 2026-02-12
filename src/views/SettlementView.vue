@@ -12,6 +12,7 @@ import OrderTable from '../components/OrderTable.vue'
 const store = useAppStore()
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000
 const DRAW_FETCH_INTERVAL_MS = 10000
+const HISTORY_OVERVIEW_KEY = '__history_overview__'
 
 const selectedPeriod = ref(store.currentPeriod)
 const queryText = ref('')
@@ -23,6 +24,7 @@ const lastDrawFetchAt = ref(0)
 let timer = null
 
 const isCurrentPeriod = computed(() => selectedPeriod.value === store.currentPeriod)
+const isHistoryOverviewSelected = computed(() => selectedPeriod.value === HISTORY_OVERVIEW_KEY)
 const currentPeriodSettled = computed(() =>
   store.drawHistory.some((item) => item.period === store.currentPeriod)
 )
@@ -66,6 +68,8 @@ const filteredBets = computed(() => {
 })
 
 const summary = computed(() => {
+  if (isHistoryOverviewSelected.value) return historyOverviewSummary.value
+
   const rows = filteredBets.value
   const totalBet = rows.reduce((sum, item) => sum + (item.totalAmount || 0), 0)
   const totalPayout = rows.reduce((sum, item) => sum + (item.payout || 0), 0)
@@ -78,10 +82,41 @@ const summary = computed(() => {
   }
 })
 
+const historyPeriodStats = computed(() =>
+  store.drawHistory.map((item) => {
+    const bets = Array.isArray(item.bets) ? item.bets : []
+    const count = Number(item.totalBets || 0) || bets.length
+    const bet = Number(item.totalBetAmount || 0) || bets.reduce((sum, row) => sum + Number(row.totalAmount || 0), 0)
+    const payout = Number(item.totalPayout || 0) || bets.reduce((sum, row) => sum + Number(row.payout || 0), 0)
+    const profit = Number(item.profit || 0) || (bet - payout)
+    return {
+      period: item.period,
+      count,
+      bet,
+      payout,
+      profit
+    }
+  })
+)
+
+const historyOverviewSummary = computed(() => ({
+  count: historyPeriodStats.value.reduce((sum, item) => sum + item.count, 0),
+  bet: historyPeriodStats.value.reduce((sum, item) => sum + item.bet, 0),
+  payout: historyPeriodStats.value.reduce((sum, item) => sum + item.payout, 0),
+  profit: historyPeriodStats.value.reduce((sum, item) => sum + item.profit, 0)
+}))
+
 const displayedDrawNumbers = computed(() => {
   if (historyRecord.value?.drawNumbers?.length) return historyRecord.value.drawNumbers
   return []
 })
+
+const formatCurrency = (value) => `¥${Number(value || 0).toFixed(2)}`
+
+const jumpToPeriod = (period) => {
+  if (!period) return
+  selectedPeriod.value = period
+}
 
 const getBeijingDayParts = (utcMs = Date.now()) => {
   const bjDate = new Date(utcMs + BEIJING_OFFSET_MS)
@@ -254,6 +289,7 @@ onUnmounted(() => {
         <label class="settlement-period-picker">
           <span>期数</span>
           <select v-model="selectedPeriod">
+            <option :value="HISTORY_OVERVIEW_KEY">历史统计</option>
             <option :value="store.currentPeriod">{{ formatPeriodDisplay(store.currentPeriod) }} (当前)</option>
             <option v-for="item in store.drawHistory" :key="item.period" :value="item.period">
               {{ formatPeriodDisplay(item.period) }}
@@ -264,7 +300,7 @@ onUnmounted(() => {
 
       <div class="form-grid settlement">
         <div class="draw-display-panel full-row">
-          <span class="draw-display-title">{{ isSettled ? '开奖号码' : '开奖倒计时' }}</span>
+          <span class="draw-display-title">{{ isHistoryOverviewSelected ? '历史汇总模式' : (isSettled ? '开奖号码' : '开奖倒计时') }}</span>
           <div v-if="displayedDrawNumbers.length" class="chip-list draw-chip-list">
             <NumberChip
               v-for="(num, idx) in displayedDrawNumbers"
@@ -274,19 +310,52 @@ onUnmounted(() => {
               show-zodiac
             />
           </div>
-          <strong v-else class="draw-countdown">{{ countdownText }}</strong>
+          <strong v-else class="draw-countdown">{{ isHistoryOverviewSelected ? '请选择下方期数查看详情' : countdownText }}</strong>
         </div>
       </div>
     </AppCard>
 
     <section class="stats-grid">
       <StatCard label="订单数" :value="summary.count" />
-      <StatCard label="投注总额" :value="`¥${summary.bet.toFixed(2)}`" />
-      <StatCard label="赔付额" :value="isSettled ? `¥${summary.payout.toFixed(2)}` : '---'" tone="warn" />
-      <StatCard label="盈亏额" :value="isSettled ? `¥${summary.profit.toFixed(2)}` : '---'" :tone="summary.profit >= 0 ? 'positive' : 'danger'" />
+      <StatCard label="投注额" :value="`¥${summary.bet.toFixed(2)}`" />
+      <StatCard label="赔付额" :value="(isSettled || isHistoryOverviewSelected) ? `¥${summary.payout.toFixed(2)}` : '---'" tone="warn" />
+      <StatCard label="盈亏额" :value="(isSettled || isHistoryOverviewSelected) ? `¥${summary.profit.toFixed(2)}` : '---'" :tone="summary.profit >= 0 ? 'positive' : 'danger'" />
     </section>
 
-    <AppCard title="订单列表" subtitle="支持按玩家/订单号搜索">
+    <AppCard v-if="isHistoryOverviewSelected" title="历史统计" subtitle="点击期数可切换到该期结算详情">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>期数</th>
+              <th>订单数</th>
+              <th>投注额</th>
+              <th>赔付</th>
+              <th>盈亏</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in historyPeriodStats"
+              :key="row.period"
+              class="period-row"
+              @click="jumpToPeriod(row.period)"
+            >
+              <td class="period-jump">{{ formatPeriodDisplay(row.period) }}</td>
+              <td>{{ row.count }}</td>
+              <td>{{ formatCurrency(row.bet) }}</td>
+              <td>{{ formatCurrency(row.payout) }}</td>
+              <td :class="row.profit >= 0 ? 'profit' : 'loss'">{{ formatCurrency(row.profit) }}</td>
+            </tr>
+            <tr v-if="historyPeriodStats.length === 0">
+              <td colspan="5" class="empty-row">暂无历史数据</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </AppCard>
+
+    <AppCard v-else title="订单列表" subtitle="支持按玩家/订单号搜索">
       <template #actions>
         <div class="inline-actions">
           <button class="btn-ghost" :class="{ active: listTab === 'all' }" @click="listTab = 'all'">全部 {{ tabCounts.all }}</button>
