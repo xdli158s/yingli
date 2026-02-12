@@ -158,7 +158,7 @@ onMounted(() => {
       <div v-if="histogramRows.length" class="number-histogram">
         <article v-for="item in histogramRows" :key="`hist-${item.number}`" class="hist-col">
           <div class="hist-bar-box">
-            <p class="hist-value" :style="{ bottom: `calc(${getBarHeight(item.amount)}% + 4px)` }">¥{{ item.amount.toFixed(2) }}</p>
+            <p class="hist-value" :style="{ bottom: `calc(${getBarHeight(item.amount)}% + 4px)` }">¥{{ item.amount.toFixed(0) }}</p>
             <span
               class="hist-fill"
               :class="`risk-${item.riskLevel}`"
