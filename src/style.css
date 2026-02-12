@@ -325,16 +325,16 @@ select {
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16);
 }
 
-.field-readonly {
+.field-value {
   border: 1px solid var(--border);
   border-radius: 10px;
+  min-height: 42px;
   padding: 9px 10px;
-  justify-content: center;
   background: #fff;
-}
-
-.field-readonly strong {
-  font-size: 18px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .btn-primary,
@@ -413,6 +413,29 @@ select {
   margin-bottom: 12px;
 }
 
+.filter-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-group {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  padding: 10px;
+}
+
+.filter-group-title {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.filter-group .filter-row {
+  margin-bottom: 0;
+}
+
 .sort-select {
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -425,6 +448,10 @@ select {
   display: grid;
   grid-template-columns: repeat(17, minmax(0, 1fr));
   gap: 10px 16px;
+}
+
+.picker-number-grid {
+  margin-bottom: 12px;
 }
 
 .number-cell {

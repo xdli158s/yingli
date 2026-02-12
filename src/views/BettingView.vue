@@ -21,16 +21,80 @@ const totalRecordAmount = computed(() =>
   store.bettingRecords.reduce((sum, record) => sum + (record.totalAmount || 0), 0)
 )
 
-const fastFilters = [
-  { key: 'big', category: 'size', label: '大' },
-  { key: 'small', category: 'size', label: '小' },
-  { key: 'odd', category: 'parity', label: '单' },
-  { key: 'even', category: 'parity', label: '双' },
-  { key: 'red', category: 'wave', label: '红波' },
-  { key: 'blue', category: 'wave', label: '蓝波' },
-  { key: 'green', category: 'wave', label: '绿波' },
-  { key: 'tailBig', category: 'tailSize', label: '尾大' },
-  { key: 'tailSmall', category: 'tailSize', label: '尾小' }
+const filterGroups = [
+  {
+    title: '两面',
+    items: [
+      { key: 'big', category: 'size', label: '大' },
+      { key: 'small', category: 'size', label: '小' },
+      { key: 'odd', category: 'parity', label: '单' },
+      { key: 'even', category: 'parity', label: '双' },
+      { key: 'tailBig', category: 'tailSize', label: '尾大' },
+      { key: 'tailSmall', category: 'tailSize', label: '尾小' },
+      { key: 'wild', category: 'beast', label: '野兽' },
+      { key: 'domestic', category: 'beast', label: '家兽' }
+    ]
+  },
+  {
+    title: '波色',
+    items: [
+      { key: 'red', category: 'wave', label: '红波' },
+      { key: 'blue', category: 'wave', label: '蓝波' },
+      { key: 'green', category: 'wave', label: '绿波' }
+    ]
+  },
+  {
+    title: '五行',
+    items: [
+      { key: 'gold', category: 'element', label: '金' },
+      { key: 'wood', category: 'element', label: '木' },
+      { key: 'water', category: 'element', label: '水' },
+      { key: 'fire', category: 'element', label: '火' },
+      { key: 'earth', category: 'element', label: '土' }
+    ]
+  },
+  {
+    title: '头部',
+    items: [
+      { key: 'head0', category: 'head', label: '0头' },
+      { key: 'head1', category: 'head', label: '1头' },
+      { key: 'head2', category: 'head', label: '2头' },
+      { key: 'head3', category: 'head', label: '3头' },
+      { key: 'head4', category: 'head', label: '4头' }
+    ]
+  },
+  {
+    title: '尾数',
+    items: [
+      { key: 'tail0', category: 'tail', label: '0尾' },
+      { key: 'tail1', category: 'tail', label: '1尾' },
+      { key: 'tail2', category: 'tail', label: '2尾' },
+      { key: 'tail3', category: 'tail', label: '3尾' },
+      { key: 'tail4', category: 'tail', label: '4尾' },
+      { key: 'tail5', category: 'tail', label: '5尾' },
+      { key: 'tail6', category: 'tail', label: '6尾' },
+      { key: 'tail7', category: 'tail', label: '7尾' },
+      { key: 'tail8', category: 'tail', label: '8尾' },
+      { key: 'tail9', category: 'tail', label: '9尾' }
+    ]
+  },
+  {
+    title: '生肖',
+    items: [
+      { key: '鼠', category: 'zodiac', label: '鼠' },
+      { key: '牛', category: 'zodiac', label: '牛' },
+      { key: '虎', category: 'zodiac', label: '虎' },
+      { key: '兔', category: 'zodiac', label: '兔' },
+      { key: '龙', category: 'zodiac', label: '龙' },
+      { key: '蛇', category: 'zodiac', label: '蛇' },
+      { key: '马', category: 'zodiac', label: '马' },
+      { key: '羊', category: 'zodiac', label: '羊' },
+      { key: '猴', category: 'zodiac', label: '猴' },
+      { key: '鸡', category: 'zodiac', label: '鸡' },
+      { key: '狗', category: 'zodiac', label: '狗' },
+      { key: '猪', category: 'zodiac', label: '猪' }
+    ]
+  }
 ]
 
 const isFilterActive = (filterKey, category) => {
@@ -117,14 +181,14 @@ const removeBet = (orderId) => {
           <input v-model.number="betAmount" type="number" min="0.01" step="0.01" />
         </label>
 
-        <div class="field field-readonly">
+        <div class="field">
           <span>选中数量</span>
-          <strong>{{ selectedCount }} 注</strong>
+          <div class="field-value">{{ selectedCount }} 注</div>
         </div>
 
-        <div class="field field-readonly">
+        <div class="field">
           <span>投注总额</span>
-          <strong>¥{{ totalBetAmount.toFixed(2) }}</strong>
+          <div class="field-value">¥{{ totalBetAmount.toFixed(2) }}</div>
         </div>
 
         <button class="btn-primary" @click="submitBet">提交投注</button>
@@ -150,29 +214,7 @@ const removeBet = (orderId) => {
         </div>
       </template>
 
-      <div class="input-inline">
-        <input
-          v-model="numberInput"
-          type="text"
-          placeholder="输入号码、范围（如 1-10）或关键词（如 红波）"
-          @keyup.enter="addInputNumbers"
-        />
-        <button class="btn-ghost" @click="addInputNumbers">添加</button>
-      </div>
-
-      <div class="filter-row">
-        <button
-          v-for="item in fastFilters"
-          :key="item.key"
-          class="filter-btn"
-          :class="{ active: isFilterActive(item.key, item.category) }"
-          @click="toggleFilter(item.key, item.category)"
-        >
-          {{ item.label }}
-        </button>
-      </div>
-
-      <div class="number-grid">
+      <div class="number-grid picker-number-grid">
         <button
           v-for="num in 49"
           :key="num"
@@ -188,6 +230,34 @@ const removeBet = (orderId) => {
           />
         </button>
       </div>
+
+      <div class="input-inline">
+        <input
+          v-model="numberInput"
+          type="text"
+          placeholder="输入号码、范围（如 1-10）或关键词（如 红波）"
+          @keyup.enter="addInputNumbers"
+        />
+        <button class="btn-ghost" @click="addInputNumbers">添加</button>
+      </div>
+
+      <div class="filter-groups">
+        <div v-for="group in filterGroups" :key="group.title" class="filter-group">
+          <p class="filter-group-title">{{ group.title }}</p>
+          <div class="filter-row">
+            <button
+              v-for="item in group.items"
+              :key="item.key"
+              class="filter-btn"
+              :class="{ active: isFilterActive(item.key, item.category) }"
+              @click="toggleFilter(item.key, item.category)"
+            >
+              {{ item.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
     </AppCard>
 
     <AppCard title="当期订单" :subtitle="`共 ${store.bettingRecords.length} 笔，投注 ¥${totalRecordAmount.toFixed(2)}`">
